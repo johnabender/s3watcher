@@ -8,7 +8,7 @@
 
 import Foundation
 
-protocol EpisodeChooserDelegate {
+protocol EpisodeChooserDelegate : class {
     func episodeDownloadStarted()
     func episodeProgress(pct: Float64)
     func episodeDownloaded(url: NSURL)
@@ -59,7 +59,7 @@ class EpisodeChooser: NSObject {
                 self.isChoosing = false
                 objc_sync_exit(self)
                 if self.ratingsURL != nil && self.episodeList != nil {
-                    self.prefetchEpisodes(3)
+                    self.prefetchEpisodes(1) 
                     self.delegate?.episodeDownloadStarted()
                 }
             }

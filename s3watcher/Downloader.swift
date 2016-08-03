@@ -147,20 +147,38 @@ class Downloader: NSObject {
         if progress != nil {
             let movieSize = Float64((movie["size"] as! NSNumber).integerValue)
             let tempURL = downloadRequest.performSelector(Selector("temporaryFileURL")).takeRetainedValue() as! NSURL
-
-            func callProgress() {
-                let delayTime = dispatch_time(DISPATCH_TIME_NOW, Int64(1 * Double(NSEC_PER_SEC)))
-                dispatch_after(delayTime, dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0)) {
-                    if let attributes = try? NSFileManager.defaultManager().attributesOfItemAtPath(tempURL.path!) as NSDictionary {
-                        let curSize = Float64(attributes.fileSize())
-                        if curSize > 0 && curSize <= movieSize {
-                            progress?(pct: curSize/movieSize)
-                            callProgress()
-                        }
-                    }
-                }
-            }
-            callProgress()
+            callProgress(tempURL, downloadURL: downloadURL, movieSize: movieSize, progress: progress!)
         }
+    }
+}
+
+func callProgress(tempURL: NSURL, downloadURL: NSURL, movieSize: Float64, progress: ((pct: Float64)->())) {
+    NSLog("prog a")
+    let delayTime = dispatch_time(DISPATCH_TIME_NOW, Int64(1 * Double(NSEC_PER_SEC)))
+    dispatch_after(delayTime, dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0)) {
+        NSLog("prog b")
+        if tempURL.path == nil {
+            NSLog("quitting callprogress with no tempurl path")
+            return
+        }
+        NSLog("prog c")
+        if let a = try? NSFileManager.defaultManager().attributesOfItemAtPath(tempURL.path!) {
+            NSLog("prog d")
+            let attributes = a as NSDictionary?
+            if attributes != nil {
+                NSLog("prog e")
+                let curSize = Float64(attributes!.fileSize())
+                NSLog("%lf %@", curSize/movieSize, downloadURL)
+                if curSize > 0 && curSize <= movieSize {
+                    NSLog("prog f")
+                    progress(pct: curSize/movieSize)
+                    callProgress(tempURL, downloadURL: downloadURL, movieSize: movieSize, progress: progress)
+                    NSLog("prog g")
+                }
+                else if curSize == 0 { NSLog("nothing yet %@", downloadURL) }
+            }
+            else { NSLog("attributes nil") }
+        }
+        else { NSLog("no attributes of item at path") }
     }
 }
