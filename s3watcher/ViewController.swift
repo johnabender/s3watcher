@@ -13,25 +13,25 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
     @IBOutlet weak var tableView: UITableView?
     @IBOutlet weak var spinner: UIActivityIndicatorView?
 
-    var groupList: NSArray = NSArray()
+    var groupList: [String] = []
 
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        Downloader.sharedDownloader().fetchGroupList { (error: NSError?, list: NSArray?) in
-            NSOperationQueue.mainQueue().addOperationWithBlock({ () -> Void in
+        Downloader.sharedDownloader().fetchGroupList { (error: Error?, list: [String]?) in
+            OperationQueue.main.addOperation({ () -> Void in
                 self.spinner?.stopAnimating()
             })
             if error != nil {
-                NSLog("error fetching group list: %@", error!)
+                print("error fetching group list", error)
                 let alert = UIAlertController(title: "Connection error",
                     message: error!.localizedDescription,
-                    preferredStyle: .Alert)
-                self.presentViewController(alert, animated: true, completion: nil)
+                    preferredStyle: .alert)
+                self.present(alert, animated: true, completion: nil)
             }
             if list != nil {
-                self.groupList = NSArray(array: list!)
-                NSOperationQueue.mainQueue().addOperationWithBlock({ () -> Void in
+                self.groupList = list!
+                OperationQueue.main.addOperation({ () -> Void in
                     self.tableView?.reloadData()
                 })
             }
@@ -43,24 +43,24 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
         // Dispose of any resources that can be recreated.
     }
 
-    func tableView(tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return self.groupList.count
     }
 
-    func tableView(tableView: UITableView, cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCellWithIdentifier("GroupListCell", forIndexPath: indexPath)
-        cell.textLabel!.text = self.groupList[indexPath.row] as? String
+    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        let cell = tableView.dequeueReusableCell(withIdentifier: "GroupListCell", for: indexPath)
+        cell.textLabel!.text = self.groupList[(indexPath as NSIndexPath).row]
         return cell
     }
 
-    override func prepareForSegue(segue: UIStoryboardSegue, sender: AnyObject?) {
-        if let episodeVC = segue.destinationViewController as? EpisodeViewController,
-            cell = sender as? UITableViewCell {
+    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
+        if let episodeVC = segue.destination as? EpisodeViewController,
+            let cell = sender as? UITableViewCell {
 
-            let indexPath = self.tableView!.indexPathForCell(cell)! as NSIndexPath
-            episodeVC.group = self.groupList[indexPath.row] as! String
+            let indexPath = self.tableView!.indexPath(for: cell)! as IndexPath
+            episodeVC.group = self.groupList[(indexPath as NSIndexPath).row]
 
-            self.tableView?.deselectRowAtIndexPath(indexPath, animated: true)
+            self.tableView?.deselectRow(at: indexPath, animated: true)
         }
     }
 }

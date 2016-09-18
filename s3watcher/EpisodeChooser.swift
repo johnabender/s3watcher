@@ -10,9 +10,9 @@ import Foundation
 
 protocol EpisodeChooserDelegate : class {
     func episodeDownloadStarted()
-    func episodeProgress(pct: Float64)
-    func episodeDownloaded(url: NSURL)
-    func downloadError(error: NSError)
+    func episodeProgress(_ monitor: DownloadProgressMonitor)
+    func episodeDownloaded(_ url: URL)
+    func downloadError(_ error: Error)
 }
 
 class EpisodeChooser: NSObject {
@@ -25,12 +25,12 @@ class EpisodeChooser: NSObject {
     var isChoosing = false
 
     var curGroup: String? = nil
-    var ratingsURL: NSURL? = nil
-    var episodeList: NSArray? = nil
+    var ratingsURL: URL? = nil
+    var episodeList: [NSDictionary]? = nil
 
     var delegate: EpisodeChooserDelegate? = nil
 
-    func chooseEpisode(group: String) {
+    func chooseEpisode(_ group: String) {
         if curGroup == group {
             return
         }
@@ -65,49 +65,49 @@ class EpisodeChooser: NSObject {
             }
         }
 
-        Downloader.sharedDownloader().fetchRatingsForGroup(group) { (error: NSError?, ratingFile: NSURL?) -> () in
+        Downloader.sharedDownloader().fetchRatingsForGroup(group) { (error: Error?, ratingFile: URL?) -> () in
             gotRatings = true
             if error == nil {
                 self.ratingsURL = ratingFile
                 completeAndPrefetch()
             }
             else {
-                NSLog("ratings download error: %@", error!)
+                print("ratings download error:", error)
                 self.delegate?.downloadError(error!)
             }
         }
 
-        Downloader.sharedDownloader().fetchListForGroup(group) { (error: NSError?, list: NSArray?) -> () in
+        Downloader.sharedDownloader().fetchListForGroup(group) { (error: Error?, list: [NSDictionary]?) -> () in
             gotEpisodes = true
             if error == nil {
                 self.episodeList = list
                 completeAndPrefetch()
             }
             else {
-                NSLog("list download error: %@", error!)
+                print("list download error", error)
                 self.delegate?.downloadError(error!)
             }
         }
     }
 
-    private func chooseEpisodeFromList() -> NSDictionary {
+    fileprivate func chooseEpisodeFromList() -> NSDictionary {
         let r = Int(arc4random_uniform(UInt32(self.episodeList!.count)) + 1)
-        return self.episodeList![r] as! NSDictionary
+        return self.episodeList![r]
     }
 
-    func prefetchEpisodes(n: Int) {
+    func prefetchEpisodes(_ n: Int) {
         for _ in 0 ..< n {
             let episode = self.chooseEpisodeFromList()
-            Downloader.sharedDownloader().fetchMovie(episode, completion: { (error: NSError?, url: NSURL?) in
+            Downloader.sharedDownloader().fetchMovie(episode, completion: { (error: Error?, url: URL?) in
                 if error != nil {
-                    NSLog("error fetching: %@", error!)
+                    print("error fetching:", error)
                 }
                 if url != nil {
-                    NSLog("movie available at %@", url!)
+                    print("movie available at", url)
                     self.delegate?.episodeDownloaded(url!)
                 }
-            }, progress: { (pct: Float64) in
-                self.delegate?.episodeProgress(pct)
+            }, progress: { (monitor: DownloadProgressMonitor) in
+                self.delegate?.episodeProgress(monitor)
             })
         }
     }

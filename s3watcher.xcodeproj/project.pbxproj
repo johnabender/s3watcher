@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		C32C47D81D7CEAD700DD8386 /* DownloadProgressMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = C32C47D71D7CEAD700DD8386 /* DownloadProgressMonitor.swift */; };
 		C35933611D4C5547008BFF94 /* DownloadProgressViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C35933601D4C5547008BFF94 /* DownloadProgressViewController.swift */; };
 		C362A8891D0CCC0F00EAA9FF /* EpisodeChooser.swift in Sources */ = {isa = PBXBuildFile; fileRef = C362A8881D0CCC0F00EAA9FF /* EpisodeChooser.swift */; };
 		C362A88B1D0CCD0F00EAA9FF /* EpisodeViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C362A88A1D0CCD0F00EAA9FF /* EpisodeViewController.swift */; };
@@ -40,6 +41,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		C32C47D71D7CEAD700DD8386 /* DownloadProgressMonitor.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DownloadProgressMonitor.swift; sourceTree = "<group>"; };
 		C35933601D4C5547008BFF94 /* DownloadProgressViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DownloadProgressViewController.swift; sourceTree = "<group>"; };
 		C362A8881D0CCC0F00EAA9FF /* EpisodeChooser.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EpisodeChooser.swift; sourceTree = "<group>"; };
 		C362A88A1D0CCD0F00EAA9FF /* EpisodeViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EpisodeViewController.swift; sourceTree = "<group>"; };
@@ -118,6 +120,7 @@
 				C362A88A1D0CCD0F00EAA9FF /* EpisodeViewController.swift */,
 				C362A8881D0CCC0F00EAA9FF /* EpisodeChooser.swift */,
 				C3705EE61BF7DC2A002CA20F /* Downloader.swift */,
+				C32C47D71D7CEAD700DD8386 /* DownloadProgressMonitor.swift */,
 				C35933601D4C5547008BFF94 /* DownloadProgressViewController.swift */,
 				C3705EBB1BF7D9BE002CA20F /* Main.storyboard */,
 				C3705EBE1BF7D9BE002CA20F /* Assets.xcassets */,
@@ -211,19 +214,22 @@
 			isa = PBXProject;
 			attributes = {
 				LastSwiftUpdateCheck = 0710;
-				LastUpgradeCheck = 0710;
+				LastUpgradeCheck = 0800;
 				ORGANIZATIONNAME = "Bender Systems, LLC";
 				TargetAttributes = {
 					C3705EB31BF7D9BE002CA20F = {
 						CreatedOnToolsVersion = 7.1.1;
 						DevelopmentTeam = 4FF5GW8T44;
+						LastSwiftMigration = 0800;
 					};
 					C3705EC41BF7D9BE002CA20F = {
 						CreatedOnToolsVersion = 7.1.1;
+						LastSwiftMigration = 0800;
 						TestTargetID = C3705EB31BF7D9BE002CA20F;
 					};
 					C3705ECF1BF7D9BE002CA20F = {
 						CreatedOnToolsVersion = 7.1.1;
+						LastSwiftMigration = 0800;
 						TestTargetID = C3705EB31BF7D9BE002CA20F;
 					};
 				};
@@ -279,6 +285,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C32C47D81D7CEAD700DD8386 /* DownloadProgressMonitor.swift in Sources */,
 				C3705EBA1BF7D9BE002CA20F /* ViewController.swift in Sources */,
 				C3705EB81BF7D9BE002CA20F /* AppDelegate.swift in Sources */,
 				C3705EE71BF7DC2A002CA20F /* Downloader.swift in Sources */,
@@ -344,8 +351,10 @@
 				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
 				CLANG_WARN_EMPTY_BODY = YES;
 				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
 				CLANG_WARN_INT_CONVERSION = YES;
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
@@ -389,8 +398,10 @@
 				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
 				CLANG_WARN_EMPTY_BODY = YES;
 				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
 				CLANG_WARN_INT_CONVERSION = YES;
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
@@ -408,6 +419,7 @@
 				MTL_ENABLE_DEBUG_INFO = NO;
 				SDKROOT = appletvos;
 				SWIFT_OBJC_BRIDGING_HEADER = "s3watcher/s3watcher-Bridging-Header.h";
+				SWIFT_OPTIMIZATION_LEVEL = "-Owholemodule";
 				TARGETED_DEVICE_FAMILY = 3;
 				TVOS_DEPLOYMENT_TARGET = 9.0;
 				VALIDATE_PRODUCT = YES;
@@ -430,6 +442,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = org.bendersystems.s3watcher;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE = "";
+				SWIFT_VERSION = 3.0;
 			};
 			name = Debug;
 		};
@@ -449,6 +462,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = org.bendersystems.s3watcher;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE = "";
+				SWIFT_VERSION = 3.0;
 			};
 			name = Release;
 		};
@@ -460,6 +474,7 @@
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = org.bendersystems.s3watcherTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 3.0;
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/s3watcher.app/s3watcher";
 			};
 			name = Debug;
@@ -472,6 +487,7 @@
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = org.bendersystems.s3watcherTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 3.0;
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/s3watcher.app/s3watcher";
 			};
 			name = Release;
@@ -483,6 +499,7 @@
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = org.bendersystems.s3watcherUITests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 3.0;
 				TEST_TARGET_NAME = s3watcher;
 				USES_XCTRUNNER = YES;
 			};
@@ -495,6 +512,7 @@
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = org.bendersystems.s3watcherUITests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 3.0;
 				TEST_TARGET_NAME = s3watcher;
 				USES_XCTRUNNER = YES;
 			};
