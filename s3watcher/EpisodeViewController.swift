@@ -19,11 +19,12 @@ class EpisodeViewController: UIViewController, EpisodeChooserDelegate {
 
     var avPlayerVC: AVPlayerViewController? = nil
     var progressVC: DownloadProgressViewController? = nil
-    var progressMonitor: DownloadProgressMonitor? = nil
     var waitingOnDownload = false
 
     override func viewDidLoad() {
         super.viewDidLoad()
+
+        // TODO: check if paused playback, prompt instead (also start download?)
 
         let storyboard = UIStoryboard(name: "Main", bundle: nil)
         objc_sync_enter(self)
@@ -34,20 +35,22 @@ class EpisodeViewController: UIViewController, EpisodeChooserDelegate {
         objc_sync_exit(self)
     }
 
+    override func viewWillDisappear(_ animated: Bool) {
+        // TODO: pause playback, save movie name
+        super.viewWillDisappear(animated)
+    }
+
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()
         NotificationCenter.default.removeObserver(self)
     }
 
-    func episodeDownloadStarted() {
-    }
-
-    func episodeProgress(_ monitor: DownloadProgressMonitor) {
+    func episodeDownloadStarted(_ monitor: DownloadProgressMonitor) {
         objc_sync_enter(self)
-        if waitingOnDownload && self.progressVC != nil && self.progressMonitor == nil && self.progressVC!.monitor == nil {
-            self.progressMonitor = monitor // mostly to retain the object
+        if waitingOnDownload && self.progressVC != nil && self.progressVC!.monitor == nil {
             self.progressVC!.monitor = monitor
         }
+        else { print("download started, not showing progress") }
         objc_sync_exit(self)
     }
 
@@ -60,13 +63,14 @@ class EpisodeViewController: UIViewController, EpisodeChooserDelegate {
         if self.progressVC != nil {
             OperationQueue.main.addOperation({ () -> Void in
                 self.dismiss(animated: true, completion: nil)
+                self.progressVC = nil
             })
-            self.progressVC = nil
         }
         objc_sync_exit(self)
 
         let item = AVPlayerItem(url: url)
         if let p = self.avPlayerVC?.player as! AVQueuePlayer? , p.items().count > 0 {
+            print("adding to queue")
             p.insert(item, after: nil)
         }
         else {
@@ -84,6 +88,8 @@ class EpisodeViewController: UIViewController, EpisodeChooserDelegate {
                 print("sent play")
             })
         }
+
+        EpisodeChooser.sharedChooser().prefetchEpisodes(2)
     }
 
     func downloadError(_ error: Error) {

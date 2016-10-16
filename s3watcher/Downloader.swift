@@ -29,6 +29,11 @@ class Downloader: NSObject {
         return sharedInstance
     }
 
+    static let maxConcurrentDownloads = 5
+
+    
+    var downloadingMovies: [URL] = []
+
 
     override init() {
         super.init()
@@ -117,7 +122,7 @@ class Downloader: NSObject {
         })
     }
 
-    func fetchMovie(_ movie: NSDictionary, completion: ((Error?, URL?)->())?, progress: ((_ monitor: DownloadProgressMonitor)->())?) {
+    func fetchMovie(_ movie: NSDictionary, initialization: ((_ monitor: DownloadProgressMonitor)->())?, completion: ((Error?, URL?)->())?) {
         let key = movie["key"] as! String
         let strippedMovie : NSString = (key as NSString).pathComponents.last! as NSString
         let downloadURL: URL = URL(string: "file://" + (NSTemporaryDirectory() as NSString).appendingPathComponent(strippedMovie as String))!
@@ -129,7 +134,13 @@ class Downloader: NSObject {
             return
         }
 
-        // TODO: check to see if movie is currently being downloaded
+        // check to see if movie is currently being downloaded
+        if downloadingMovies.contains(downloadURL) {
+            print("already downloading", downloadURL)
+            completion?(nil, downloadURL)
+            return
+        }
+        downloadingMovies.append(downloadURL)
 
         let transferMgr = AWSS3TransferManager.s3TransferManager(forKey: "downloadMgr")
         let downloadRequest = AWSS3TransferManagerDownloadRequest()
@@ -140,9 +151,16 @@ class Downloader: NSObject {
         print("starting movie download to", downloadURL)
         let startTime = Date()
         if let downloadTask = transferMgr?.download(downloadRequest) {
+            if initialization != nil {
+                let movieSize = Float64((movie["size"] as! NSNumber).intValue)
+                let tempURL = downloadRequest?.perform(Selector(("temporaryFileURL"))).takeUnretainedValue() as! URL
+                let progressMonitor = DownloadProgressMonitor(tempURL: tempURL, downloadURL: downloadURL, movieSize: movieSize)
+                initialization?(progressMonitor)
+            }
+
             downloadTask.continue(_: { (t: AWSTask?) -> Any? in
                 if let task = t {
-                    NSLog("finished download in %lf min", -startTime.timeIntervalSinceNow/60.0)
+                    print("finished download in", round(-startTime.timeIntervalSinceNow/60.0), "min")
                     if task.error != nil {
                         completion?(task.error, nil)
                     }
@@ -150,16 +168,12 @@ class Downloader: NSObject {
                         print("completed OK to", url)
                         completion?(nil, url)
                     }
+                    if self.downloadingMovies.index(of: downloadURL) != nil {
+                        self.downloadingMovies.remove(at: self.downloadingMovies.index(of: downloadURL)!)
+                    }
                 }
                 return nil
             })
-
-            if progress != nil {
-                let movieSize = Float64((movie["size"] as! NSNumber).intValue)
-                let tempURL = downloadRequest?.perform(Selector("temporaryFileURL")).takeRetainedValue() as! URL
-                let progressMonitor = DownloadProgressMonitor(tempURL: tempURL, downloadURL: downloadURL, movieSize: movieSize)
-                progress?(progressMonitor)
-            }
         }
     }
 }

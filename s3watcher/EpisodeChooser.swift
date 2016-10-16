@@ -9,8 +9,7 @@
 import Foundation
 
 protocol EpisodeChooserDelegate : class {
-    func episodeDownloadStarted()
-    func episodeProgress(_ monitor: DownloadProgressMonitor)
+    func episodeDownloadStarted(_ monitor: DownloadProgressMonitor)
     func episodeDownloaded(_ url: URL)
     func downloadError(_ error: Error)
 }
@@ -59,8 +58,7 @@ class EpisodeChooser: NSObject {
                 self.isChoosing = false
                 objc_sync_exit(self)
                 if self.ratingsURL != nil && self.episodeList != nil {
-                    self.prefetchEpisodes(1) 
-                    self.delegate?.episodeDownloadStarted()
+                    self.prefetchEpisodes(1)
                 }
             }
         }
@@ -91,14 +89,24 @@ class EpisodeChooser: NSObject {
     }
 
     fileprivate func chooseEpisodeFromList() -> NSDictionary {
-        let r = Int(arc4random_uniform(UInt32(self.episodeList!.count)) + 1)
+        // TODO: prefer episodes already downloaded
+        // TODO: choose based on ratings
+        let r = Int(arc4random_uniform(UInt32(self.episodeList!.count)))
         return self.episodeList![r]
     }
 
     func prefetchEpisodes(_ n: Int) {
+        // TODO: check max episodes downloaded
+
         for _ in 0 ..< n {
+            if Downloader.sharedDownloader().downloadingMovies.count >= Downloader.maxConcurrentDownloads {
+                break
+            }
+
             let episode = self.chooseEpisodeFromList()
-            Downloader.sharedDownloader().fetchMovie(episode, completion: { (error: Error?, url: URL?) in
+            Downloader.sharedDownloader().fetchMovie(episode, initialization: { (monitor: DownloadProgressMonitor) in
+                self.delegate?.episodeDownloadStarted(monitor)
+            }, completion: { (error: Error?, url: URL?) in
                 if error != nil {
                     print("error fetching:", error)
                 }
@@ -106,8 +114,6 @@ class EpisodeChooser: NSObject {
                     print("movie available at", url)
                     self.delegate?.episodeDownloaded(url!)
                 }
-            }, progress: { (monitor: DownloadProgressMonitor) in
-                self.delegate?.episodeProgress(monitor)
             })
         }
     }

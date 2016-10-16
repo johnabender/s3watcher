@@ -38,20 +38,62 @@ class DownloadProgressViewController: UIViewController {
 
             OperationQueue.main.addOperation({ () -> Void in
                 self.progressMeter?.setProgress(Float(self.pct), animated: true)
-                self.estimateLabel?.text = String(format: "%@ remaining", self.remainingStr)
+                if self.pct > 0.0 && self.pct < 1.0 {
+                    self.estimateLabel?.text = String(format: "%@ remaining", self.remainingStr)
+                }
             })
         }
     }
 
     var monitor: DownloadProgressMonitor? {
         didSet {
-            monitor?.progressFunction = self.updatePct
+            if self.monitor != nil {
+                self.startPolling()
+            }
         }
     }
 
-    func updatePct(_ pct: Float64) {
-        self.pct = pct
+    var opQ: OperationQueue?
+
+    override func viewWillDisappear(_ animated: Bool) {
+        self.stopPolling()
+        super.viewWillDisappear(animated)
+    }
+
+    func startPolling() {
+        opQ = OperationQueue()
+        self.addPollOperation()
+    }
+
+    func addPollOperation() {
+        let op = BlockOperation(block: { () -> Void in })
+        op.addExecutionBlock {
+            if !op.isCancelled && self.monitor != nil {
+                self.pct = self.monitor!.getPctComplete()
+                if self.pct >= 1.0 {
+                    return
+                }
+
+                let usleepTarget: useconds_t = useconds_t(1e6)
+                let usleepIncrement: useconds_t = useconds_t(1e4)
+                var uslept: useconds_t = 0
+                while uslept < usleepTarget {
+                    usleep(usleepIncrement)
+                    uslept += usleepIncrement
+                    if op.isCancelled {
+                        return
+                    }
+                }
+                self.addPollOperation()
+            }
+        }
+        opQ?.addOperation(op)
+    }
+
+    func stopPolling() {
+        opQ?.cancelAllOperations()
+        opQ?.waitUntilAllOperationsAreFinished()
+        monitor = nil
+        opQ = nil
     }
 }
-
-
