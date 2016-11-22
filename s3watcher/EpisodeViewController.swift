@@ -13,7 +13,7 @@ class EpisodeViewController: UIViewController, EpisodeChooserDelegate {
     var group: String = "" {
         didSet {
             EpisodeChooser.sharedChooser().delegate = self
-            EpisodeChooser.sharedChooser().chooseEpisode(group)
+            EpisodeChooser.sharedChooser().chooseFirstEpisode(group)
         }
     }
 
@@ -37,6 +37,14 @@ class EpisodeViewController: UIViewController, EpisodeChooserDelegate {
 
     override func viewWillDisappear(_ animated: Bool) {
         // TODO: pause playback, save movie name
+        print("disappearing!")
+        self.avPlayerVC?.player?.pause()
+        if let item = self.avPlayerVC?.player?.currentItem as AVPlayerItem! {
+            if let asset = item.asset as? AVURLAsset {
+                print(asset.url)
+            }
+            print(self.avPlayerVC!.player!.currentTime())
+        }
         super.viewWillDisappear(animated)
     }
 

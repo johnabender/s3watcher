@@ -111,6 +111,7 @@ class Downloader: NSObject {
                     for obj in contents {
                         if let s3obj = obj as? AWSS3Object {
                             if s3obj.size != 0 && s3obj.key != group && s3obj.key != group + "_ratings.txt" && s3obj.key != group + "_times.txt" {
+                                // TODO: make model object
                                 list.append(["key": s3obj.key, "size": s3obj.size])
                             }
                         }

@@ -25,11 +25,11 @@ class EpisodeChooser: NSObject {
 
     var curGroup: String? = nil
     var ratingsURL: URL? = nil
-    var episodeList: [NSDictionary]? = nil
+    var episodeList: [NSDictionary]? = nil // TODO: model object instead of NSDictionary
 
     var delegate: EpisodeChooserDelegate? = nil
 
-    func chooseEpisode(_ group: String) {
+    func chooseFirstEpisode(_ group: String) {
         if curGroup == group {
             return
         }
@@ -58,7 +58,7 @@ class EpisodeChooser: NSObject {
                 self.isChoosing = false
                 objc_sync_exit(self)
                 if self.ratingsURL != nil && self.episodeList != nil {
-                    self.prefetchEpisodes(1)
+                    self.prefetchEpisodes(1, preferLocal: true)
                 }
             }
         }
@@ -88,22 +88,39 @@ class EpisodeChooser: NSObject {
         }
     }
 
-    fileprivate func chooseEpisodeFromList() -> NSDictionary {
-        // TODO: prefer episodes already downloaded
+    fileprivate func chooseEpisodeFromList(preferLocal: Bool) -> NSDictionary {
+        var episodes = self.episodeList!
+
+        // prefer episodes already downloaded
+        if preferLocal, let dir = try? FileManager.default.contentsOfDirectory(atPath: (NSTemporaryDirectory() as String)) {
+            episodes = []
+            for file in dir {
+                if file.hasSuffix(".m4v") {
+                    episodes.append(["key": file, "size": 1])
+                }
+            }
+            if episodes.count == 0 {
+                episodes = self.episodeList!
+            }
+        }
+
+
         // TODO: choose based on ratings
-        let r = Int(arc4random_uniform(UInt32(self.episodeList!.count)))
-        return self.episodeList![r]
+
+        let r = Int(arc4random_uniform(UInt32(episodes.count)))
+        return episodes[r]
     }
 
-    func prefetchEpisodes(_ n: Int) {
+    func prefetchEpisodes(_ n: Int, preferLocal: Bool = false) {
         // TODO: check max episodes downloaded
 
-        for _ in 0 ..< n {
+        for i in 0 ..< n {
             if Downloader.sharedDownloader().downloadingMovies.count >= Downloader.maxConcurrentDownloads {
                 break
             }
 
-            let episode = self.chooseEpisodeFromList()
+            let episode = self.chooseEpisodeFromList(preferLocal: preferLocal && i == 0)
+
             Downloader.sharedDownloader().fetchMovie(episode, initialization: { (monitor: DownloadProgressMonitor) in
                 self.delegate?.episodeDownloadStarted(monitor)
             }, completion: { (error: Error?, url: URL?) in
