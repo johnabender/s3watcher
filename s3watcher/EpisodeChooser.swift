@@ -8,6 +8,8 @@
 
 import Foundation
 
+private let maxDownloadedEpisodes = 10
+
 protocol EpisodeChooserDelegate : class {
     func episodeDownloadStarted(_ monitor: DownloadProgressMonitor)
     func episodeDownloaded(_ url: URL)
@@ -57,8 +59,8 @@ class EpisodeChooser: NSObject {
                 objc_sync_enter(self)
                 self.isChoosing = false
                 objc_sync_exit(self)
-                if self.ratingsURL != nil && self.episodeList != nil {
-                    self.prefetchEpisodes(1, preferLocal: true)
+                if self.episodeList != nil {
+                    self.prefetchEpisodes(1, first: true)
                 }
             }
         }
@@ -71,7 +73,7 @@ class EpisodeChooser: NSObject {
             }
             else {
                 print("ratings download error:", error)
-                self.delegate?.downloadError(error!)
+                completeAndPrefetch()
             }
         }
 
@@ -88,50 +90,82 @@ class EpisodeChooser: NSObject {
         }
     }
 
+    fileprivate func downloadDir() -> URL {
+        return URL(string: "file://" + (NSTemporaryDirectory() as String))!.appendingPathComponent(self.curGroup!)
+    }
+
     fileprivate func chooseEpisodeFromList(preferLocal: Bool) -> NSDictionary {
         var episodes = self.episodeList!
 
         // prefer episodes already downloaded
-        if preferLocal, let dir = try? FileManager.default.contentsOfDirectory(atPath: (NSTemporaryDirectory() as String)) {
+        if preferLocal, let dir = try? FileManager.default.contentsOfDirectory(at: self.downloadDir(),
+                                                                               includingPropertiesForKeys: nil,
+                                                                               options: .skipsHiddenFiles) {
             episodes = []
             for file in dir {
-                if file.hasSuffix(".m4v") {
-                    episodes.append(["key": file, "size": 1])
+                for potential in self.episodeList! {
+                    let p = URL(string: potential["key"] as! String)!.lastPathComponent
+                    if p == file.lastPathComponent {
+                        episodes.append(potential)
+                        break
+                    }
                 }
             }
             if episodes.count == 0 {
+                print("no pre-downloaded files")
                 episodes = self.episodeList!
             }
         }
 
-
-        // TODO: choose based on ratings
+        // TODO: choose based on ratings, if available
 
         let r = Int(arc4random_uniform(UInt32(episodes.count)))
         return episodes[r]
     }
 
-    func prefetchEpisodes(_ n: Int, preferLocal: Bool = false) {
-        // TODO: check max episodes downloaded
+    fileprivate func fetchOne(preferLocal: Bool) {
+        let episode = self.chooseEpisodeFromList(preferLocal: preferLocal)
+        Downloader.sharedDownloader().fetchMovie(episode, initialization: { (monitor: DownloadProgressMonitor) in
+            self.delegate?.episodeDownloadStarted(monitor)
+        }, completion: { (error: Error?, url: URL?) in
+            if error != nil {
+                print("error fetching:", error)
+            }
+            if url != nil {
+                print("movie available at", url)
+                self.delegate?.episodeDownloaded(url!)
+            }
+        })
+    }
+
+    func prefetchEpisodes(_ n: Int, first: Bool = false) {
+        if let dir = try? FileManager.default.contentsOfDirectory(at: self.downloadDir(),
+                                                                  includingPropertiesForKeys: nil,
+                                                                  options: .skipsHiddenFiles) {
+            if dir.count == self.episodeList!.count {
+                print("already downloaded all episodes")
+                if first {
+                    self.fetchOne(preferLocal: true)
+                }
+                return
+            }
+            if dir.count == maxDownloadedEpisodes {
+                print("already downloaded max episodes, not prefetching another")
+                if first {
+                    self.fetchOne(preferLocal: true)
+                }
+                return
+            }
+        }
+
 
         for i in 0 ..< n {
             if Downloader.sharedDownloader().downloadingMovies.count >= Downloader.maxConcurrentDownloads {
+                print("already downloading max concurrent files, not prefetching another")
                 break
             }
 
-            let episode = self.chooseEpisodeFromList(preferLocal: preferLocal && i == 0)
-
-            Downloader.sharedDownloader().fetchMovie(episode, initialization: { (monitor: DownloadProgressMonitor) in
-                self.delegate?.episodeDownloadStarted(monitor)
-            }, completion: { (error: Error?, url: URL?) in
-                if error != nil {
-                    print("error fetching:", error)
-                }
-                if url != nil {
-                    print("movie available at", url)
-                    self.delegate?.episodeDownloaded(url!)
-                }
-            })
+            self.fetchOne(preferLocal: first && i == 0)
         }
     }
 }

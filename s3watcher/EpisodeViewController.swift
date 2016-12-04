@@ -105,17 +105,29 @@ class EpisodeViewController: UIViewController, EpisodeChooserDelegate {
         let nse = error as NSError
         if let userInfoMsg = nse.userInfo["Message"] as? String {
             msg = userInfoMsg
+            if let userInfoKey = nse.userInfo["Key"] as? String {
+                msg += String(format: ": %@", userInfoKey)
+            }
         }
         let alert = UIAlertController(title: "Download error",
                                       message: msg,
                                       preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title:"OK", style:.default, handler:{(action: UIAlertAction) -> Void in
+            alert.presentingViewController?.dismiss(animated: true, completion: nil)
+        }))
         OperationQueue.main.addOperation({ () -> Void in
-            self.present(alert, animated: true, completion: nil)
+            if self.progressVC != nil && self.presentedViewController == self.progressVC {
+                self.progressVC!.present(alert, animated: true, completion: nil)
+            }
+            else {
+                self.present(alert, animated: true, completion: nil)
+            }
         })
     }
 
     func episodeFinished(_ note: Notification) {
         print("episode finished, prefetching another")
+        // TODO: delete downloaded episode so prefetch can proceed
         EpisodeChooser.sharedChooser().prefetchEpisodes(1)
     }
 }

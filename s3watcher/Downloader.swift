@@ -125,8 +125,7 @@ class Downloader: NSObject {
 
     func fetchMovie(_ movie: NSDictionary, initialization: ((_ monitor: DownloadProgressMonitor)->())?, completion: ((Error?, URL?)->())?) {
         let key = movie["key"] as! String
-        let strippedMovie : NSString = (key as NSString).pathComponents.last! as NSString
-        let downloadURL: URL = URL(string: "file://" + (NSTemporaryDirectory() as NSString).appendingPathComponent(strippedMovie as String))!
+        let downloadURL: URL = URL(string: "file://" + (NSTemporaryDirectory() as NSString).appendingPathComponent(key))!
 
         // check to see if movie has already been downloaded
         if FileManager.default.fileExists(atPath: downloadURL.path) {
@@ -142,6 +141,14 @@ class Downloader: NSObject {
             return
         }
         downloadingMovies.append(downloadURL)
+
+        // ensure destination directory exists
+        var downloadDir = URL(string: "file://" + NSTemporaryDirectory())!
+        let components = (key as NSString).pathComponents
+        for c in components.prefix(components.count - 1) {
+            downloadDir = downloadDir.appendingPathComponent(c)
+        }
+        try? FileManager.default.createDirectory(at: downloadDir, withIntermediateDirectories: true, attributes: nil)
 
         let transferMgr = AWSS3TransferManager.s3TransferManager(forKey: "downloadMgr")
         let downloadRequest = AWSS3TransferManagerDownloadRequest()

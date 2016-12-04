@@ -17,7 +17,10 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        self.initialize()
+    }
 
+    func initialize() {
         Downloader.sharedDownloader().fetchGroupList { (error: Error?, list: [String]?) in
             OperationQueue.main.addOperation({ () -> Void in
                 self.spinner?.stopAnimating()
@@ -27,9 +30,16 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
                 let alert = UIAlertController(title: "Connection error",
                     message: error!.localizedDescription,
                     preferredStyle: .alert)
-                self.present(alert, animated: true, completion: nil)
+                alert.addAction(UIAlertAction(title:"Retry", style:.default, handler:{(action: UIAlertAction) -> Void in
+                    self.dismiss(animated: true, completion: {() -> Void in
+                        self.initialize()
+                    })
+                }))
+                OperationQueue.main.addOperation({ () -> Void in
+                    self.present(alert, animated: true, completion: nil)
+                })
             }
-            if list != nil {
+            else if list != nil {
                 self.groupList = list!
                 OperationQueue.main.addOperation({ () -> Void in
                     self.tableView?.reloadData()
