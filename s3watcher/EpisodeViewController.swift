@@ -9,6 +9,10 @@
 import UIKit
 import AVKit
 
+private let pausedMovieGroupDefaultsKey = "pausedMovieGroup"
+private let pausedMovieUrlDefaultsKey = "pausedMovieUrl"
+private let pausedMovieTimeDefaultsKey = "pausedMovieTime"
+
 class EpisodeViewController: UIViewController, EpisodeChooserDelegate {
     var group: String = "" {
         didSet {
@@ -24,26 +28,37 @@ class EpisodeViewController: UIViewController, EpisodeChooserDelegate {
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        // TODO: check if paused playback, prompt instead (also start download?)
-
-        let storyboard = UIStoryboard(name: "Main", bundle: nil)
-        objc_sync_enter(self)
-        self.progressVC = storyboard.instantiateViewController(withIdentifier: "DownloadProgressViewController") as? DownloadProgressViewController
-        self.present(self.progressVC!, animated: false, completion: nil)
-
-        waitingOnDownload = true
-        objc_sync_exit(self)
+        if let pausedGroup = UserDefaults.standard.string(forKey: pausedMovieGroupDefaultsKey) as String!, pausedGroup != "" {
+            let alert = UIAlertController(title: "Resume paused video?",
+                                          message: nil,
+                                          preferredStyle: .alert)
+            alert.addAction(UIAlertAction(title: "Resume", style: .default, handler: {(action: UIAlertAction) -> Void in
+                alert.presentingViewController?.dismiss(animated: true, completion: nil)
+                let pausedUrl = UserDefaults.standard.url(forKey: pausedMovieUrlDefaultsKey)!
+                self.episodeDownloaded(pausedUrl)
+                self.clearPaused()
+            }))
+            alert.addAction(UIAlertAction(title: "Ignore", style: .default, handler: {(action: UIAlertAction) -> Void in
+                alert.presentingViewController?.dismiss(animated: true, completion: nil)
+                self.clearPaused()
+                self.downloadFirst()
+            }))
+            OperationQueue.main.addOperation({ () -> Void in
+                self.present(alert, animated: true, completion: nil)
+            })
+        }
+        else {
+            self.downloadFirst()
+        }
     }
 
     override func viewWillDisappear(_ animated: Bool) {
-        // TODO: pause playback, save movie name
-        print("disappearing!")
+        print("will disappear")
         self.avPlayerVC?.player?.pause()
-        if let item = self.avPlayerVC?.player?.currentItem as AVPlayerItem! {
-            if let asset = item.asset as? AVURLAsset {
-                print(asset.url)
-            }
-            print(self.avPlayerVC!.player!.currentTime())
+        if let item = self.avPlayerVC?.player?.currentItem as AVPlayerItem!, let asset = item.asset as? AVURLAsset {
+            UserDefaults.standard.set(self.group, forKey: pausedMovieGroupDefaultsKey)
+            UserDefaults.standard.set(asset.url, forKey: pausedMovieUrlDefaultsKey)
+            UserDefaults.standard.set(CMTimeGetSeconds(self.avPlayerVC!.player!.currentTime()), forKey: pausedMovieTimeDefaultsKey)
         }
         super.viewWillDisappear(animated)
     }
@@ -51,6 +66,23 @@ class EpisodeViewController: UIViewController, EpisodeChooserDelegate {
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()
         NotificationCenter.default.removeObserver(self)
+    }
+
+    func clearPaused() {
+        UserDefaults.standard.set(nil, forKey: pausedMovieGroupDefaultsKey)
+        UserDefaults.standard.set(nil, forKey: pausedMovieUrlDefaultsKey)
+    }
+
+    func downloadFirst() {
+        let storyboard = UIStoryboard(name: "Main", bundle: nil)
+        objc_sync_enter(self)
+        self.progressVC = storyboard.instantiateViewController(withIdentifier: "DownloadProgressViewController") as? DownloadProgressViewController
+        OperationQueue.main.addOperation({ () -> Void in
+            self.present(self.progressVC!, animated: false, completion: nil)
+        })
+
+        waitingOnDownload = true
+        objc_sync_exit(self)
     }
 
     func episodeDownloadStarted(_ monitor: DownloadProgressMonitor) {
@@ -65,6 +97,7 @@ class EpisodeViewController: UIViewController, EpisodeChooserDelegate {
     func episodeDownloaded(_ url: URL) {
         print("got episode at", url, "ready to start")
         objc_sync_enter(self)
+
         if waitingOnDownload {
             waitingOnDownload = false
         }
@@ -74,30 +107,53 @@ class EpisodeViewController: UIViewController, EpisodeChooserDelegate {
                 self.progressVC = nil
             })
         }
-        objc_sync_exit(self)
 
         let item = AVPlayerItem(url: url)
         if let p = self.avPlayerVC?.player as! AVQueuePlayer? , p.items().count > 0 {
-            print("adding to queue")
-            p.insert(item, after: nil)
+            let items = p.items()
+            var foundInQueue = false
+            for i in items {
+                if let a = i.asset as? AVURLAsset {
+                    if a.url == url {
+                        foundInQueue = true
+                        break
+                    }
+                }
+            }
+            if !foundInQueue {
+                print("adding to queue")
+                p.insert(item, after: nil)
+                EpisodeChooser.sharedChooser().prefetchEpisodes(1)
+            }
         }
         else {
             print("starting player")
+            // if no saved time, start at 0
+            let pausedTime = UserDefaults.standard.float(forKey: pausedMovieTimeDefaultsKey)
+            UserDefaults.standard.set(nil, forKey: pausedMovieTimeDefaultsKey)
+
+            self.avPlayerVC = AVPlayerViewController()
+            self.avPlayerVC!.player = AVQueuePlayer(items: [item])
+            self.avPlayerVC!.player!.actionAtItemEnd = .advance
+            NotificationCenter.default.addObserver(self, selector: #selector(EpisodeViewController.episodeFinished(_:)), name: NSNotification.Name.AVPlayerItemDidPlayToEndTime, object: nil)
             OperationQueue.main.addOperation({ () -> Void in
-                self.avPlayerVC = AVPlayerViewController()
-                self.avPlayerVC!.player = AVQueuePlayer(items: [item])
-                self.avPlayerVC!.player!.actionAtItemEnd = .advance
-                NotificationCenter.default.addObserver(self, selector: #selector(EpisodeViewController.episodeFinished(_:)), name: NSNotification.Name.AVPlayerItemDidPlayToEndTime, object: nil)
+                objc_sync_enter(self)
                 self.avPlayerVC!.view.frame = self.view.bounds
                 self.addChildViewController(self.avPlayerVC!)
                 self.view.addSubview(self.avPlayerVC!.view)
                 self.avPlayerVC!.didMove(toParentViewController: self)
+                if pausedTime > 0.0 {
+                    let time = CMTimeMakeWithSeconds(Float64(pausedTime), 60)
+                    self.avPlayerVC!.player!.seek(to: time)
+                }
                 self.avPlayerVC!.player!.play()
+                objc_sync_exit(self)
                 print("sent play")
             })
+            EpisodeChooser.sharedChooser().prefetchEpisodes(2)
         }
 
-        EpisodeChooser.sharedChooser().prefetchEpisodes(2)
+        objc_sync_exit(self)
     }
 
     func downloadError(_ error: Error) {

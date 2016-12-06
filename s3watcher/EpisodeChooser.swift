@@ -143,17 +143,11 @@ class EpisodeChooser: NSObject {
                                                                   includingPropertiesForKeys: nil,
                                                                   options: .skipsHiddenFiles) {
             if dir.count == self.episodeList!.count {
-                print("already downloaded all episodes")
-                if first {
-                    self.fetchOne(preferLocal: true)
-                }
+                self.fetchOne(preferLocal: true)
                 return
             }
             if dir.count == maxDownloadedEpisodes {
-                print("already downloaded max episodes, not prefetching another")
-                if first {
-                    self.fetchOne(preferLocal: true)
-                }
+                self.fetchOne(preferLocal: true)
                 return
             }
         }
