@@ -12,7 +12,7 @@ private let maxDownloadedEpisodes = 10
 
 protocol EpisodeChooserDelegate : class {
     func episodeDownloadStarted(_ monitor: DownloadProgressMonitor)
-    func episodeDownloaded(_ url: URL)
+    func episodeDownloaded(_ episode: Episode)
     func downloadError(_ error: Error)
 }
 
@@ -27,7 +27,7 @@ class EpisodeChooser: NSObject {
 
     var curGroup: String? = nil
     var ratingsURL: URL? = nil
-    var episodeList: [NSDictionary]? = nil // TODO: model object instead of NSDictionary
+    var episodeList: [Episode]? = nil
 
     var delegate: EpisodeChooserDelegate? = nil
 
@@ -77,7 +77,7 @@ class EpisodeChooser: NSObject {
             }
         }
 
-        Downloader.sharedDownloader().fetchListForGroup(group) { (error: Error?, list: [NSDictionary]?) -> () in
+        Downloader.sharedDownloader().fetchListForGroup(group) { (error: Error?, list: [Episode]?) -> () in
             gotEpisodes = true
             if error == nil {
                 self.episodeList = list
@@ -94,7 +94,7 @@ class EpisodeChooser: NSObject {
         return URL(string: "file://" + (NSTemporaryDirectory() as String))!.appendingPathComponent(self.curGroup!)
     }
 
-    fileprivate func chooseEpisodeFromList(preferLocal: Bool) -> NSDictionary {
+    fileprivate func chooseEpisodeFromList(preferLocal: Bool) -> Episode {
         var episodes = self.episodeList!
 
         // prefer episodes already downloaded
@@ -104,7 +104,7 @@ class EpisodeChooser: NSObject {
             episodes = []
             for file in dir {
                 for potential in self.episodeList! {
-                    let p = URL(string: potential["key"] as! String)!.lastPathComponent
+                    let p = URL(string: potential.key)!.lastPathComponent
                     if p == file.lastPathComponent {
                         episodes.append(potential)
                         break
@@ -127,13 +127,13 @@ class EpisodeChooser: NSObject {
         let episode = self.chooseEpisodeFromList(preferLocal: preferLocal)
         Downloader.sharedDownloader().fetchMovie(episode, initialization: { (monitor: DownloadProgressMonitor) in
             self.delegate?.episodeDownloadStarted(monitor)
-        }, completion: { (error: Error?, url: URL?) in
+        }, completion: { (error: Error?, movie: Episode?) in
             if error != nil {
                 print("error fetching:", error)
             }
-            if url != nil {
-                print("movie available at", url)
-                self.delegate?.episodeDownloaded(url!)
+            if movie != nil {
+                print("movie available", movie)
+                self.delegate?.episodeDownloaded(movie!)
             }
         })
     }

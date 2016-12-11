@@ -28,14 +28,17 @@ class EpisodeViewController: UIViewController, EpisodeChooserDelegate {
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        if let pausedGroup = UserDefaults.standard.string(forKey: pausedMovieGroupDefaultsKey) as String!, pausedGroup != "" {
+        if let pausedGroup = UserDefaults.standard.string(forKey: pausedMovieGroupDefaultsKey) as String!,
+            pausedGroup != "",
+            let pausedUrl = UserDefaults.standard.url(forKey: pausedMovieUrlDefaultsKey),
+            FileManager.default.fileExists(atPath: pausedUrl.path) {
+
             let alert = UIAlertController(title: "Resume paused video?",
                                           message: nil,
                                           preferredStyle: .alert)
             alert.addAction(UIAlertAction(title: "Resume", style: .default, handler: {(action: UIAlertAction) -> Void in
                 alert.presentingViewController?.dismiss(animated: true, completion: nil)
-                let pausedUrl = UserDefaults.standard.url(forKey: pausedMovieUrlDefaultsKey)!
-                self.episodeDownloaded(pausedUrl)
+                self.episodeDownloaded(Episode(fileUrl: pausedUrl))
                 self.clearPaused()
             }))
             alert.addAction(UIAlertAction(title: "Ignore", style: .default, handler: {(action: UIAlertAction) -> Void in
@@ -94,8 +97,8 @@ class EpisodeViewController: UIViewController, EpisodeChooserDelegate {
         objc_sync_exit(self)
     }
 
-    func episodeDownloaded(_ url: URL) {
-        print("got episode at", url, "ready to start")
+    func episodeDownloaded(_ episode: Episode) {
+        print("got episode at", episode, "ready to start")
         objc_sync_enter(self)
 
         if waitingOnDownload {
@@ -108,13 +111,13 @@ class EpisodeViewController: UIViewController, EpisodeChooserDelegate {
             })
         }
 
-        let item = AVPlayerItem(url: url)
+        let item = AVPlayerItem(url: episode.fileSystemUrl)
         if let p = self.avPlayerVC?.player as! AVQueuePlayer? , p.items().count > 0 {
             let items = p.items()
             var foundInQueue = false
             for i in items {
                 if let a = i.asset as? AVURLAsset {
-                    if a.url == url {
+                    if a.url == episode.fileSystemUrl {
                         foundInQueue = true
                         break
                     }

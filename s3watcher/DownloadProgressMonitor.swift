@@ -9,27 +9,23 @@
 import UIKit
 
 class DownloadProgressMonitor: NSObject {
-    var tempURL: URL
-    var downloadURL: URL
-    var movieSize: Float64
+    var episode: Episode
 
-    init(tempURL: URL, downloadURL: URL, movieSize: Float64) {
-        self.tempURL = URL(string: tempURL.path)!
-        self.downloadURL = downloadURL
-        self.movieSize = movieSize
+    init(episode: Episode) {
+        self.episode = episode
         super.init()
     }
 
     func getPctComplete() -> Float64 {
-        if let a = try? FileManager.default.attributesOfItem(atPath: self.tempURL.path) {
+        if let a = try? FileManager.default.attributesOfItem(atPath: self.episode.tempDownloadUrl!.path) {
             let attributes = a as NSDictionary?
             if attributes != nil {
                 let curSize = Float64(attributes!.fileSize())
-                print(curSize/self.movieSize, self.downloadURL)
-                if curSize >= 0.0 && curSize <= self.movieSize {
-                    return curSize/self.movieSize
+                print(curSize/self.episode.size, self.episode)
+                if curSize >= 0.0 && curSize <= self.episode.size {
+                    return curSize/self.episode.size
                 }
-                else { print("not updating progress - ", curSize, movieSize) }
+                else { print("not updating progress - ", curSize, self.episode.size) }
             }
             else { print("not continuing - no attributes") }
         }

@@ -21,6 +21,7 @@
 		C3705EE51BF7DBF2002CA20F /* AWSS3.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C3705EE31BF7DBF2002CA20F /* AWSS3.framework */; };
 		C3705EE71BF7DC2A002CA20F /* Downloader.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3705EE61BF7DC2A002CA20F /* Downloader.swift */; };
 		C3705EEC1BF7E47E002CA20F /* libz.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = C3705EEB1BF7E47E002CA20F /* libz.tbd */; };
+		C3CA8E0A1DFCCC4E0015AF4B /* Episode.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3CA8E091DFCCC4E0015AF4B /* Episode.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -62,6 +63,7 @@
 		C3705EE61BF7DC2A002CA20F /* Downloader.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Downloader.swift; sourceTree = "<group>"; };
 		C3705EEA1BF7DE4B002CA20F /* s3watcher-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "s3watcher-Bridging-Header.h"; sourceTree = "<group>"; };
 		C3705EEB1BF7E47E002CA20F /* libz.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libz.tbd; path = usr/lib/libz.tbd; sourceTree = SDKROOT; };
+		C3CA8E091DFCCC4E0015AF4B /* Episode.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Episode.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -117,6 +119,7 @@
 			children = (
 				C3705EB71BF7D9BE002CA20F /* AppDelegate.swift */,
 				C3705EB91BF7D9BE002CA20F /* ViewController.swift */,
+				C3CA8E091DFCCC4E0015AF4B /* Episode.swift */,
 				C362A88A1D0CCD0F00EAA9FF /* EpisodeViewController.swift */,
 				C362A8881D0CCC0F00EAA9FF /* EpisodeChooser.swift */,
 				C3705EE61BF7DC2A002CA20F /* Downloader.swift */,
@@ -287,6 +290,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				C32C47D81D7CEAD700DD8386 /* DownloadProgressMonitor.swift in Sources */,
+				C3CA8E0A1DFCCC4E0015AF4B /* Episode.swift in Sources */,
 				C3705EBA1BF7D9BE002CA20F /* ViewController.swift in Sources */,
 				C3705EB81BF7D9BE002CA20F /* AppDelegate.swift in Sources */,
 				C3705EE71BF7DC2A002CA20F /* Downloader.swift in Sources */,

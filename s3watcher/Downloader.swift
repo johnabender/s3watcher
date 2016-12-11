@@ -32,7 +32,7 @@ class Downloader: NSObject {
     static let maxConcurrentDownloads = 5
 
     
-    var downloadingMovies: [URL] = []
+    var downloadingMovies: [Episode] = []
 
 
     override init() {
@@ -93,7 +93,7 @@ class Downloader: NSObject {
         })
     }
 
-    func fetchListForGroup(_ group: String, completion: ((Error?, [NSDictionary]?)->())?) {
+    func fetchListForGroup(_ group: String, completion: ((Error?, [Episode]?)->())?) {
         let listRequest = AWSS3ListObjectsRequest()
         listRequest?.bucket = bucketName
         listRequest?.prefix = group
@@ -107,12 +107,11 @@ class Downloader: NSObject {
                 }
                 else if task.result != nil {
                     let contents : Array = (task.result as AnyObject).contents
-                    var list: [NSDictionary] = []
+                    var list: [Episode] = []
                     for obj in contents {
                         if let s3obj = obj as? AWSS3Object {
                             if s3obj.size != 0 && s3obj.key != group && s3obj.key != group + "_ratings.txt" && s3obj.key != group + "_times.txt" {
-                                // TODO: make model object
-                                list.append(["key": s3obj.key, "size": s3obj.size])
+                                list.append(Episode(s3Key: s3obj.key, fileSize: Float64((s3obj.size).intValue)))
                             }
                         }
                     }
@@ -123,46 +122,42 @@ class Downloader: NSObject {
         })
     }
 
-    func fetchMovie(_ movie: NSDictionary, initialization: ((_ monitor: DownloadProgressMonitor)->())?, completion: ((Error?, URL?)->())?) {
-        let key = movie["key"] as! String
-        let downloadURL: URL = URL(string: "file://" + (NSTemporaryDirectory() as NSString).appendingPathComponent(key))!
-
+    func fetchMovie(_ movie: Episode, initialization: ((_ monitor: DownloadProgressMonitor)->())?, completion: ((Error?, Episode?)->())?) {
         // check to see if movie has already been downloaded
-        if FileManager.default.fileExists(atPath: downloadURL.path) {
-            print("movie exists at", downloadURL)
-            completion?(nil, downloadURL)
+        if FileManager.default.fileExists(atPath: movie.fileSystemUrl.path) {
+            print("movie exists", movie)
+            completion?(nil, movie)
             return
         }
 
         // check to see if movie is currently being downloaded
-        if downloadingMovies.contains(downloadURL) {
-            print("already downloading", downloadURL)
-            completion?(nil, downloadURL)
+        if downloadingMovies.contains(movie) {
+            print("already downloading", movie)
+            completion?(nil, movie)
             return
         }
-        downloadingMovies.append(downloadURL)
+        downloadingMovies.append(movie)
 
         // ensure destination directory exists
         var downloadDir = URL(string: "file://" + NSTemporaryDirectory())!
-        let components = (key as NSString).pathComponents
+        let components = (movie.key as NSString).pathComponents
         for c in components.prefix(components.count - 1) {
             downloadDir = downloadDir.appendingPathComponent(c)
+            try? FileManager.default.createDirectory(at: downloadDir, withIntermediateDirectories: true, attributes: nil)
         }
-        try? FileManager.default.createDirectory(at: downloadDir, withIntermediateDirectories: true, attributes: nil)
 
         let transferMgr = AWSS3TransferManager.s3TransferManager(forKey: "downloadMgr")
         let downloadRequest = AWSS3TransferManagerDownloadRequest()
         downloadRequest?.bucket = bucketName
-        downloadRequest?.key = key
-        downloadRequest?.downloadingFileURL = downloadURL
+        downloadRequest?.key = movie.key
+        downloadRequest?.downloadingFileURL = movie.fileSystemUrl
 
-        print("starting movie download to", downloadURL)
+        print("starting movie download", movie)
         let startTime = Date()
         if let downloadTask = transferMgr?.download(downloadRequest) {
             if initialization != nil {
-                let movieSize = Float64((movie["size"] as! NSNumber).intValue)
-                let tempURL = downloadRequest?.perform(Selector(("temporaryFileURL"))).takeUnretainedValue() as! URL
-                let progressMonitor = DownloadProgressMonitor(tempURL: tempURL, downloadURL: downloadURL, movieSize: movieSize)
+                movie.tempDownloadUrl = downloadRequest?.perform(Selector(("temporaryFileURL"))).takeUnretainedValue() as? URL
+                let progressMonitor = DownloadProgressMonitor(episode: movie)
                 initialization?(progressMonitor)
             }
 
@@ -174,10 +169,10 @@ class Downloader: NSObject {
                     }
                     else if let output = task.result as? AWSS3GetObjectOutput, let url = output.body as? URL {
                         print("completed OK to", url)
-                        completion?(nil, url)
+                        completion?(nil, movie)
                     }
-                    if self.downloadingMovies.index(of: downloadURL) != nil {
-                        self.downloadingMovies.remove(at: self.downloadingMovies.index(of: downloadURL)!)
+                    if self.downloadingMovies.index(of: movie) != nil {
+                        self.downloadingMovies.remove(at: self.downloadingMovies.index(of: movie)!)
                     }
                 }
                 return nil
