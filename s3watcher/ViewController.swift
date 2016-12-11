@@ -17,6 +17,13 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
 
     override func viewDidLoad() {
         super.viewDidLoad()
+
+        // why doesn't the navigation bar's "title color" in the storyboard do this??
+        if var a = self.navigationController?.navigationBar.titleTextAttributes as [String: Any]! {
+            a[NSForegroundColorAttributeName] = UIColor.white
+            self.navigationController?.navigationBar.titleTextAttributes = a
+        }
+
         self.initialize()
     }
 
@@ -55,6 +62,9 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
     }
 
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        print(self.navigationController?.navigationBar.titleTextAttributes)
+        print(self.navigationController?.navigationBar.barTintColor)
+        print(self.navigationController?.navigationBar.tintColor)
         return self.groupList.count
     }
 
