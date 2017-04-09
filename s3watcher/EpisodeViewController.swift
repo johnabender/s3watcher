@@ -14,12 +14,9 @@ private let pausedMovieUrlDefaultsKey = "pausedMovieUrl"
 private let pausedMovieTimeDefaultsKey = "pausedMovieTime"
 
 class EpisodeViewController: UIViewController, EpisodeChooserDelegate {
-    var group: String = "" {
-        didSet {
-            EpisodeChooser.sharedChooser().delegate = self
-            EpisodeChooser.sharedChooser().chooseFirstEpisode(group)
-        }
-    }
+    var group: String = ""
+
+    let episodeChooser = EpisodeChooser()
 
     var avPlayerVC: AVPlayerViewController? = nil
     var progressVC: DownloadProgressViewController? = nil
@@ -28,8 +25,11 @@ class EpisodeViewController: UIViewController, EpisodeChooserDelegate {
     override func viewDidLoad() {
         super.viewDidLoad()
 
+        episodeChooser.delegate = self
+
         if let pausedGroup = UserDefaults.standard.string(forKey: pausedMovieGroupDefaultsKey) as String!,
             pausedGroup != "",
+            pausedGroup == self.group,
             let pausedUrl = UserDefaults.standard.url(forKey: pausedMovieUrlDefaultsKey),
             FileManager.default.fileExists(atPath: pausedUrl.path) {
 
@@ -37,28 +37,33 @@ class EpisodeViewController: UIViewController, EpisodeChooserDelegate {
                                           message: nil,
                                           preferredStyle: .alert)
             alert.addAction(UIAlertAction(title: "Resume", style: .default, handler: {(action: UIAlertAction) -> Void in
+                print("chose resume paused video, starting playback")
                 alert.presentingViewController?.dismiss(animated: true, completion: nil)
                 self.episodeDownloaded(Episode(fileUrl: pausedUrl))
                 self.clearPaused()
+                self.episodeChooser.startBackgroundFetch(self.group)
             }))
             alert.addAction(UIAlertAction(title: "Ignore", style: .default, handler: {(action: UIAlertAction) -> Void in
+                print("chose ignore paused video, downloading another")
                 alert.presentingViewController?.dismiss(animated: true, completion: nil)
                 self.clearPaused()
-                self.downloadFirst()
+                self.showDownloadFirst()
             }))
             OperationQueue.main.addOperation({ () -> Void in
                 self.present(alert, animated: true, completion: nil)
             })
         }
         else {
-            self.downloadFirst()
+            self.showDownloadFirst()
         }
     }
 
     override func viewWillDisappear(_ animated: Bool) {
         print("will disappear")
         self.avPlayerVC?.player?.pause()
-        if let item = self.avPlayerVC?.player?.currentItem as AVPlayerItem!, let asset = item.asset as? AVURLAsset {
+        if let item = self.avPlayerVC?.player?.currentItem as AVPlayerItem!,
+            let asset = item.asset as? AVURLAsset {
+
             UserDefaults.standard.set(self.group, forKey: pausedMovieGroupDefaultsKey)
             UserDefaults.standard.set(asset.url, forKey: pausedMovieUrlDefaultsKey)
             UserDefaults.standard.set(CMTimeGetSeconds(self.avPlayerVC!.player!.currentTime()), forKey: pausedMovieTimeDefaultsKey)
@@ -76,7 +81,9 @@ class EpisodeViewController: UIViewController, EpisodeChooserDelegate {
         UserDefaults.standard.set(nil, forKey: pausedMovieUrlDefaultsKey)
     }
 
-    func downloadFirst() {
+    func showDownloadFirst() {
+        episodeChooser.startDownloads(group)
+
         let storyboard = UIStoryboard(name: "Main", bundle: nil)
         objc_sync_enter(self)
         self.progressVC = storyboard.instantiateViewController(withIdentifier: "DownloadProgressViewController") as? DownloadProgressViewController
@@ -112,6 +119,7 @@ class EpisodeViewController: UIViewController, EpisodeChooserDelegate {
         }
 
         let item = AVPlayerItem(url: episode.fileSystemUrl)
+        // if we're currently playing an episode, add new episode to the queue
         if let p = self.avPlayerVC?.player as! AVQueuePlayer? , p.items().count > 0 {
             let items = p.items()
             var foundInQueue = false
@@ -126,9 +134,9 @@ class EpisodeViewController: UIViewController, EpisodeChooserDelegate {
             if !foundInQueue {
                 print("adding to queue")
                 p.insert(item, after: nil)
-                EpisodeChooser.sharedChooser().prefetchEpisodes(1)
             }
         }
+        // not currently playing an episode, so start playback
         else {
             print("starting player")
             // if no saved time, start at 0
@@ -153,7 +161,6 @@ class EpisodeViewController: UIViewController, EpisodeChooserDelegate {
                 objc_sync_exit(self)
                 print("sent play")
             })
-            EpisodeChooser.sharedChooser().prefetchEpisodes(2)
         }
 
         objc_sync_exit(self)
@@ -185,8 +192,11 @@ class EpisodeViewController: UIViewController, EpisodeChooserDelegate {
     }
 
     func episodeFinished(_ note: Notification) {
-        print("episode finished, prefetching another")
-        // TODO: delete downloaded episode so prefetch can proceed
-        EpisodeChooser.sharedChooser().prefetchEpisodes(1)
+        if let item = self.avPlayerVC?.player?.currentItem as AVPlayerItem!,
+            let asset = item.asset as? AVURLAsset {
+
+            episodeChooser.finishedViewing(Episode(fileUrl: asset.url))
+        }
+        else { print("unable to determine what finished") }
     }
 }

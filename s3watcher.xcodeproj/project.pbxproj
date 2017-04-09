@@ -21,6 +21,7 @@
 		C3705EE51BF7DBF2002CA20F /* AWSS3.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C3705EE31BF7DBF2002CA20F /* AWSS3.framework */; };
 		C3705EE71BF7DC2A002CA20F /* Downloader.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3705EE61BF7DC2A002CA20F /* Downloader.swift */; };
 		C3705EEC1BF7E47E002CA20F /* libz.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = C3705EEB1BF7E47E002CA20F /* libz.tbd */; };
+		C3B03B161E995D8C007B318C /* VideoFileManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3B03B151E995D8C007B318C /* VideoFileManager.swift */; };
 		C3CA8E0A1DFCCC4E0015AF4B /* Episode.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3CA8E091DFCCC4E0015AF4B /* Episode.swift */; };
 /* End PBXBuildFile section */
 
@@ -63,6 +64,7 @@
 		C3705EE61BF7DC2A002CA20F /* Downloader.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Downloader.swift; sourceTree = "<group>"; };
 		C3705EEA1BF7DE4B002CA20F /* s3watcher-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "s3watcher-Bridging-Header.h"; sourceTree = "<group>"; };
 		C3705EEB1BF7E47E002CA20F /* libz.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libz.tbd; path = usr/lib/libz.tbd; sourceTree = SDKROOT; };
+		C3B03B151E995D8C007B318C /* VideoFileManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = VideoFileManager.swift; sourceTree = "<group>"; };
 		C3CA8E091DFCCC4E0015AF4B /* Episode.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Episode.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -122,6 +124,7 @@
 				C3CA8E091DFCCC4E0015AF4B /* Episode.swift */,
 				C362A88A1D0CCD0F00EAA9FF /* EpisodeViewController.swift */,
 				C362A8881D0CCC0F00EAA9FF /* EpisodeChooser.swift */,
+				C3B03B151E995D8C007B318C /* VideoFileManager.swift */,
 				C3705EE61BF7DC2A002CA20F /* Downloader.swift */,
 				C32C47D71D7CEAD700DD8386 /* DownloadProgressMonitor.swift */,
 				C35933601D4C5547008BFF94 /* DownloadProgressViewController.swift */,
@@ -295,6 +298,7 @@
 				C3705EB81BF7D9BE002CA20F /* AppDelegate.swift in Sources */,
 				C3705EE71BF7DC2A002CA20F /* Downloader.swift in Sources */,
 				C362A8891D0CCC0F00EAA9FF /* EpisodeChooser.swift in Sources */,
+				C3B03B161E995D8C007B318C /* VideoFileManager.swift in Sources */,
 				C362A88B1D0CCD0F00EAA9FF /* EpisodeViewController.swift in Sources */,
 				C35933611D4C5547008BFF94 /* DownloadProgressViewController.swift in Sources */,
 			);

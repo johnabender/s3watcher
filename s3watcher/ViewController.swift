@@ -34,7 +34,7 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
                 self.spinner?.stopAnimating()
             })
             if error != nil {
-                print("error fetching group list", error)
+                print("error fetching group list", error!)
                 let alert = UIAlertController(title: "Connection error",
                     message: error!.localizedDescription,
                     preferredStyle: .alert)
@@ -62,9 +62,6 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
     }
 
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        print(self.navigationController?.navigationBar.titleTextAttributes)
-        print(self.navigationController?.navigationBar.barTintColor)
-        print(self.navigationController?.navigationBar.tintColor)
         return self.groupList.count
     }
 

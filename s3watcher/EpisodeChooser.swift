@@ -8,36 +8,35 @@
 
 import Foundation
 
-private let maxDownloadedEpisodes = 10
-
 protocol EpisodeChooserDelegate : class {
-    func episodeDownloadStarted(_ monitor: DownloadProgressMonitor)
     func episodeDownloaded(_ episode: Episode)
+    func episodeDownloadStarted(_ monitor: DownloadProgressMonitor)
     func downloadError(_ error: Error)
 }
 
 class EpisodeChooser: NSObject {
-    static var sharedInstance = EpisodeChooser()
-
-    class func sharedChooser() -> EpisodeChooser {
-        return sharedInstance
-    }
-
     var isChoosing = false
 
-    var curGroup: String? = nil
+    var group: String? = nil
     var ratingsURL: URL? = nil
     var episodeList: [Episode]? = nil
 
     var delegate: EpisodeChooserDelegate? = nil
 
-    func chooseFirstEpisode(_ group: String) {
-        if curGroup == group {
-            return
+    // called when a new group is selected, initialize and kick off downloads
+    func startDownloads(_ group: String) {
+
+        // first, perform callbacks if locally cached episodes are present
+        VideoFileManager.sharedManager().warmCache(group: group)
+        if let episode = VideoFileManager.sharedManager().firstQueuedEpisode() {
+            self.delegate?.episodeDownloaded(episode)
+            if let anotherEpisode = VideoFileManager.sharedManager().secondQueuedEpisode() {
+                self.delegate?.episodeDownloaded(anotherEpisode)
+            }
         }
 
         // note race condition if isChoosing
-        curGroup = group
+        self.group = group
         ratingsURL = nil
         episodeList = nil
 
@@ -60,7 +59,7 @@ class EpisodeChooser: NSObject {
                 self.isChoosing = false
                 objc_sync_exit(self)
                 if self.episodeList != nil {
-                    self.prefetchEpisodes(1, first: true)
+                    self.prefetchEpisodes(1)
                 }
             }
         }
@@ -72,7 +71,7 @@ class EpisodeChooser: NSObject {
                 completeAndPrefetch()
             }
             else {
-                print("ratings download error:", error)
+                print("ratings download error:", error!)
                 completeAndPrefetch()
             }
         }
@@ -84,82 +83,55 @@ class EpisodeChooser: NSObject {
                 completeAndPrefetch()
             }
             else {
-                print("list download error", error)
+                print("list download error", error!)
                 self.delegate?.downloadError(error!)
             }
         }
     }
 
-    fileprivate func downloadDir() -> URL {
-        return URL(string: "file://" + (NSTemporaryDirectory() as String))!.appendingPathComponent(self.curGroup!)
+    // called when resuming a paused playback, ensure downloads are running
+    func startBackgroundFetch(_ group: String) {
+        self.startDownloads(group)
     }
 
-    fileprivate func chooseEpisodeFromList(preferLocal: Bool) -> Episode {
+    func finishedViewing(_ episode: Episode) {
+        VideoFileManager.sharedManager().episodeCompleted(episode)
+    }
+
+    fileprivate func chooseEpisodeFromList() -> Episode {
         var episodes = self.episodeList!
 
-        // prefer episodes already downloaded
-        if preferLocal, let dir = try? FileManager.default.contentsOfDirectory(at: self.downloadDir(),
-                                                                               includingPropertiesForKeys: nil,
-                                                                               options: .skipsHiddenFiles) {
-            episodes = []
-            for file in dir {
-                for potential in self.episodeList! {
-                    let p = URL(string: potential.key)!.lastPathComponent
-                    if p == file.lastPathComponent {
-                        episodes.append(potential)
-                        break
-                    }
-                }
-            }
-            if episodes.count == 0 {
-                print("no pre-downloaded files")
-                episodes = self.episodeList!
-            }
-        }
-
         // TODO: choose based on ratings, if available
-
         let r = Int(arc4random_uniform(UInt32(episodes.count)))
         return episodes[r]
     }
 
-    fileprivate func fetchOne(preferLocal: Bool) {
-        let episode = self.chooseEpisodeFromList(preferLocal: preferLocal)
+    fileprivate func fetchOne() {
+        let episode = self.chooseEpisodeFromList()
         Downloader.sharedDownloader().fetchMovie(episode, initialization: { (monitor: DownloadProgressMonitor) in
             self.delegate?.episodeDownloadStarted(monitor)
         }, completion: { (error: Error?, movie: Episode?) in
             if error != nil {
-                print("error fetching:", error)
+                print("error fetching:", error!)
             }
             if movie != nil {
-                print("movie available", movie)
+                print("movie downloaded", movie!)
+                VideoFileManager.sharedManager().episodeDownloaded(movie!)
                 self.delegate?.episodeDownloaded(movie!)
             }
+
+            self.prefetchEpisodes(2)
         })
     }
 
-    func prefetchEpisodes(_ n: Int, first: Bool = false) {
-        if let dir = try? FileManager.default.contentsOfDirectory(at: self.downloadDir(),
-                                                                  includingPropertiesForKeys: nil,
-                                                                  options: .skipsHiddenFiles) {
-            if dir.count == self.episodeList!.count {
-                self.fetchOne(preferLocal: true)
-                return
-            }
-            if dir.count == maxDownloadedEpisodes {
-                self.fetchOne(preferLocal: true)
-                return
-            }
-        }
-
-
-        for i in 0 ..< n {
+    fileprivate func prefetchEpisodes(_ n: Int) {
+        for _ in 0 ..< n {
             if Downloader.sharedDownloader().downloadingMovies.count >= Downloader.maxConcurrentDownloads {
                 print("already downloading max concurrent files, not prefetching another")
                 break
             }
 
-            self.fetchOne(preferLocal: first && i == 0)
+            self.fetchOne()
         }
     }
 }

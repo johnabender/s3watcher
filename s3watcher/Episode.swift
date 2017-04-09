@@ -34,7 +34,7 @@ class Episode : NSObject {
                 self.size = Float64(attributes!.fileSize())
             }
         }
-        self.key = fileUrl.lastPathComponent // this isn't accurate, but close enough for now
+        self.key = fileUrl.lastPathComponent // this isn't accurate (group name?), but close enough for now
         super.init()
     }
 }
