@@ -92,19 +92,24 @@ class VideoFileManager: NSObject {
         return self.queuedEpisode(atPosition: 1)
     }
 
-    func episodeDownloaded(_ episode: Episode) {
+    func episodeDownloaded(_ episode: Episode) -> Bool {
         objc_sync_enter(episodePrecacheQueue)
         episodePrecacheQueue.append(episode)
         objc_sync_exit(episodePrecacheQueue)
 
         self.tryShift()
+
+        return episodePrecacheQueue.count < maxDownloadedEpisodes
     }
 
     func episodeCompleted(_ episode: Episode) {
         // Remove episode from cache, but leave on disk.
         // If this episode is selected again, the downloader will detect its
         // presence in the download directory and use the available file.
-        self.move(episode: episode, toDir: "download")
+        if !self.move(episode: episode, toDir: "download") {
+            // delete from disk if move failed
+            try? FileManager.default.removeItem(at: episode.fileSystemUrl)
+        }
 
         objc_sync_enter(episodeCache)
         var index = -1
@@ -114,7 +119,11 @@ class VideoFileManager: NSObject {
                 break
             }
         }
-        episodeCache.remove(at: index)
+        if index == -1 {
+            print("\(Date().timeIntervalSince1970) \(#file.components(separatedBy: "/").last!) \(#function) just finished playing a file that wasn't in the cache?? \(episode.fileSystemUrl)")
+        } else {
+            episodeCache.remove(at: index)
+        }
         objc_sync_exit(episodeCache)
 
         self.tryShift()
@@ -129,14 +138,14 @@ class VideoFileManager: NSObject {
         let episode = episodePrecacheQueue.remove(at: 0)
         objc_sync_exit(episodePrecacheQueue)
 
-        self.move(episode: episode, toDir: "cache")
+        _ = self.move(episode: episode, toDir: "cache")
 
         objc_sync_enter(episodeCache)
         episodeCache.append(episode)
         objc_sync_exit(episodeCache)
     }
 
-    fileprivate func move(episode: Episode, toDir: String) {
+    fileprivate func move(episode: Episode, toDir: String) -> Bool {
         let components = episode.fileSystemUrl.pathComponents
         let group = components[components.count - 2]
         let file = components[components.count - 1]
@@ -159,8 +168,10 @@ class VideoFileManager: NSObject {
         do {
             try FileManager.default.moveItem(at: episode.fileSystemUrl, to: newUrl)
             episode.fileSystemUrl = newUrl
+            return true
         } catch {
-            print("failed moving item from \(episode.fileSystemUrl) to \(newUrl)")
+            print("\(Date().timeIntervalSince1970) \(#file.components(separatedBy: "/").last!) \(#function) failed moving item from \(episode.fileSystemUrl) to \(newUrl)")
+            return false
         }
     }
 }

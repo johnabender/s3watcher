@@ -25,11 +25,11 @@ class DownloadProgressMonitor: NSObject {
                 if curSize >= 0.0 && curSize <= self.episode.size {
                     return curSize/self.episode.size
                 }
-                else { print("not updating progress - ", curSize, self.episode.size) }
+                else { print("\(Date().timeIntervalSince1970) \(#file.components(separatedBy: "/").last!) \(#function) not updating progress - ", curSize, self.episode.size) }
             }
-            else { print("not continuing - no attributes") }
+            else { print("\(Date().timeIntervalSince1970) \(#file.components(separatedBy: "/").last!) \(#function) not continuing - no attributes") }
         }
-        else { print("no item at tempurl path") }
+        else { print("\(Date().timeIntervalSince1970) \(#file.components(separatedBy: "/").last!) \(#function) no item at tempurl path") }
 
         return 0.0
     }

@@ -125,14 +125,14 @@ class Downloader: NSObject {
     func fetchMovie(_ movie: Episode, initialization: ((_ monitor: DownloadProgressMonitor)->())?, completion: ((Error?, Episode?)->())?) {
         // check to see if movie has already been downloaded
         if FileManager.default.fileExists(atPath: movie.fileSystemUrl.path) {
-            print("movie exists", movie)
+            print("\(Date().timeIntervalSince1970) \(#file.components(separatedBy: "/").last!) \(#function) movie exists", movie)
             completion?(nil, movie)
             return
         }
 
         // check to see if movie is currently being downloaded
         if downloadingMovies.contains(movie) {
-            print("already downloading", movie)
+            print("\(Date().timeIntervalSince1970) \(#file.components(separatedBy: "/").last!) \(#function) already downloading", movie)
             completion?(nil, movie)
             return
         }
@@ -152,7 +152,7 @@ class Downloader: NSObject {
         downloadRequest?.key = movie.key
         downloadRequest?.downloadingFileURL = movie.fileSystemUrl
 
-        print("starting movie download", movie)
+        print("\(Date().timeIntervalSince1970) \(#file.components(separatedBy: "/").last!) \(#function) starting movie download", movie)
         let startTime = Date()
         if let downloadTask = transferMgr?.download(downloadRequest) {
             if initialization != nil {
@@ -163,12 +163,12 @@ class Downloader: NSObject {
 
             downloadTask.continue(_: { (t: AWSTask?) -> Any? in
                 if let task = t {
-                    print("finished download in", round(-startTime.timeIntervalSinceNow/60.0), "min")
+                    print("\(Date().timeIntervalSince1970) \(#file.components(separatedBy: "/").last!) \(#function) finished download in", round(-startTime.timeIntervalSinceNow/60.0), "min")
                     if task.error != nil {
                         completion?(task.error, nil)
                     }
                     else if let output = task.result as? AWSS3GetObjectOutput, let url = output.body as? URL {
-                        print("completed OK to", url)
+                        print("\(Date().timeIntervalSince1970) \(#file.components(separatedBy: "/").last!) \(#function) completed OK to", url)
                         completion?(nil, movie)
                     }
                     if self.downloadingMovies.index(of: movie) != nil {

@@ -34,7 +34,7 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
                 self.spinner?.stopAnimating()
             })
             if error != nil {
-                print("error fetching group list", error!)
+                print("\(Date().timeIntervalSince1970) \(#file.components(separatedBy: "/").last!) \(#function) error fetching group list", error!)
                 let alert = UIAlertController(title: "Connection error",
                     message: error!.localizedDescription,
                     preferredStyle: .alert)
