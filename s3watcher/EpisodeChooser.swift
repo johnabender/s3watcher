@@ -71,7 +71,7 @@ class EpisodeChooser: NSObject {
                 completeAndPrefetch()
             }
             else {
-                print("\(Date().timeIntervalSince1970) \(#file.components(separatedBy: "/").last!) \(#function) ratings download error:", error!)
+                Util.log("ratings download error:", error!, f: [#file, #function])
                 completeAndPrefetch()
             }
         }
@@ -83,7 +83,7 @@ class EpisodeChooser: NSObject {
                 completeAndPrefetch()
             }
             else {
-                print("\(Date().timeIntervalSince1970) \(#file.components(separatedBy: "/").last!) \(#function) list download error", error!)
+                Util.log("list download error", error!, f: [#file, #function])
                 self.delegate?.downloadError(error!)
             }
         }
@@ -112,12 +112,12 @@ class EpisodeChooser: NSObject {
             self.delegate?.episodeDownloadStarted(monitor)
         }, completion: { (error: Error?, movie: Episode?) in
             if error != nil {
-                print("\(Date().timeIntervalSince1970) \(#file.components(separatedBy: "/").last!) \(#function) error fetching:", error!)
+                Util.log("error fetching:", error!, f: [#file, #function])
             }
 
             var shouldContinueDownloading = true
             if movie != nil {
-                print("\(Date().timeIntervalSince1970) \(#file.components(separatedBy: "/").last!) \(#function) movie downloaded", movie!)
+                Util.log("movie downloaded", movie!, f: [#file, #function])
                 shouldContinueDownloading = VideoFileManager.sharedManager().episodeDownloaded(movie!)
                 self.delegate?.episodeDownloaded(movie!)
             }
@@ -131,7 +131,7 @@ class EpisodeChooser: NSObject {
     fileprivate func prefetchEpisodes(_ n: Int) {
         for _ in 0 ..< n {
             if Downloader.sharedDownloader().downloadingMovies.count >= Downloader.maxConcurrentDownloads {
-                print("\(Date().timeIntervalSince1970) \(#file.components(separatedBy: "/").last!) \(#function) already downloading max concurrent files, not prefetching another")
+                Util.log("already downloading max concurrent files, not prefetching another", f: [#file, #function])
                 break
             }
 

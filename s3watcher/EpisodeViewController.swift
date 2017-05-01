@@ -37,14 +37,14 @@ class EpisodeViewController: UIViewController, EpisodeChooserDelegate {
                                           message: nil,
                                           preferredStyle: .alert)
             alert.addAction(UIAlertAction(title: "Resume", style: .default, handler: {(action: UIAlertAction) -> Void in
-                print("\(Date().timeIntervalSince1970) \(#file.components(separatedBy: "/").last!) \(#function) chose resume paused video, starting playback")
+                Util.log("chose resume paused video, starting playback", f: [#file, #function])
                 alert.presentingViewController?.dismiss(animated: true, completion: nil)
                 self.episodeDownloaded(Episode(fileUrl: pausedUrl))
                 self.clearPaused()
                 self.episodeChooser.startBackgroundFetch(self.group)
             }))
             alert.addAction(UIAlertAction(title: "Ignore", style: .default, handler: {(action: UIAlertAction) -> Void in
-                print("\(Date().timeIntervalSince1970) \(#file.components(separatedBy: "/").last!) \(#function) chose ignore paused video, downloading another")
+                Util.log("chose ignore paused video, downloading another", f: [#file, #function])
                 alert.presentingViewController?.dismiss(animated: true, completion: nil)
                 self.clearPaused()
                 self.showDownloadFirst()
@@ -59,7 +59,7 @@ class EpisodeViewController: UIViewController, EpisodeChooserDelegate {
     }
 
     override func viewWillDisappear(_ animated: Bool) {
-        print("\(Date().timeIntervalSince1970) \(#file.components(separatedBy: "/").last!) \(#function) will disappear")
+        Util.log("will disappear", f: [#file, #function])
         self.avPlayerVC?.player?.pause()
         if let item = self.avPlayerVC?.player?.currentItem as AVPlayerItem!,
             let asset = item.asset as? AVURLAsset {
@@ -100,12 +100,12 @@ class EpisodeViewController: UIViewController, EpisodeChooserDelegate {
         if waitingOnDownload && self.progressVC != nil && self.progressVC!.monitor == nil {
             self.progressVC!.monitor = monitor
         }
-        else { print("\(Date().timeIntervalSince1970) \(#file.components(separatedBy: "/").last!) \(#function)  download started, not showing progress") }
+        else { Util.log("download started, not showing progress", f: [#file, #function]) }
         objc_sync_exit(self)
     }
 
     func episodeDownloaded(_ episode: Episode) {
-        print("\(Date().timeIntervalSince1970) \(#file.components(separatedBy: "/").last!) \(#function)  \(episode)")
+        Util.log(episode, f: [#file, #function])
         objc_sync_enter(self)
 
         if waitingOnDownload {
@@ -132,13 +132,13 @@ class EpisodeViewController: UIViewController, EpisodeChooserDelegate {
                 }
             }
             if !foundInQueue {
-                print("\(Date().timeIntervalSince1970) \(#file.components(separatedBy: "/").last!) \(#function)  adding to queue")
+                Util.log("adding to queue", f: [#file, #function])
                 p.insert(item, after: nil)
             }
         }
         // not currently playing an episode, so start playback
         else {
-            print("\(Date().timeIntervalSince1970) \(#file.components(separatedBy: "/").last!) \(#function)  starting player")
+            Util.log("starting player", f: [#file, #function])
             // if no saved time, start at 0
             let pausedTime = UserDefaults.standard.float(forKey: pausedMovieTimeDefaultsKey)
             UserDefaults.standard.set(nil, forKey: pausedMovieTimeDefaultsKey)
@@ -159,7 +159,7 @@ class EpisodeViewController: UIViewController, EpisodeChooserDelegate {
                 }
                 self.avPlayerVC!.player!.play()
                 objc_sync_exit(self)
-                print("\(Date().timeIntervalSince1970) \(#file.components(separatedBy: "/").last!) \(#function)  sent play")
+                Util.log("sent play", f: [#file, #function])
             })
         }
 
@@ -197,6 +197,6 @@ class EpisodeViewController: UIViewController, EpisodeChooserDelegate {
 
             episodeChooser.finishedViewing(Episode(fileUrl: asset.url))
         }
-        else { print("\(Date().timeIntervalSince1970) \(#file.components(separatedBy: "/").last!) \(#function)  unable to determine what finished") }
+        else { Util.log("unable to determine what finished", f: [#file, #function]) }
     }
 }

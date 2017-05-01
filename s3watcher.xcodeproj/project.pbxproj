@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		C308DA531EB75A5400F32E97 /* Util.swift in Sources */ = {isa = PBXBuildFile; fileRef = C308DA521EB75A5400F32E97 /* Util.swift */; };
 		C32C47D81D7CEAD700DD8386 /* DownloadProgressMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = C32C47D71D7CEAD700DD8386 /* DownloadProgressMonitor.swift */; };
 		C35933611D4C5547008BFF94 /* DownloadProgressViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C35933601D4C5547008BFF94 /* DownloadProgressViewController.swift */; };
 		C362A8891D0CCC0F00EAA9FF /* EpisodeChooser.swift in Sources */ = {isa = PBXBuildFile; fileRef = C362A8881D0CCC0F00EAA9FF /* EpisodeChooser.swift */; };
@@ -43,6 +44,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		C308DA521EB75A5400F32E97 /* Util.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Util.swift; sourceTree = "<group>"; };
 		C32C47D71D7CEAD700DD8386 /* DownloadProgressMonitor.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DownloadProgressMonitor.swift; sourceTree = "<group>"; };
 		C35933601D4C5547008BFF94 /* DownloadProgressViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DownloadProgressViewController.swift; sourceTree = "<group>"; };
 		C362A8881D0CCC0F00EAA9FF /* EpisodeChooser.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EpisodeChooser.swift; sourceTree = "<group>"; };
@@ -128,6 +130,7 @@
 				C3705EE61BF7DC2A002CA20F /* Downloader.swift */,
 				C32C47D71D7CEAD700DD8386 /* DownloadProgressMonitor.swift */,
 				C35933601D4C5547008BFF94 /* DownloadProgressViewController.swift */,
+				C308DA521EB75A5400F32E97 /* Util.swift */,
 				C3705EBB1BF7D9BE002CA20F /* Main.storyboard */,
 				C3705EBE1BF7D9BE002CA20F /* Assets.xcassets */,
 				C3705EC01BF7D9BE002CA20F /* Info.plist */,
@@ -299,6 +302,7 @@
 				C3705EE71BF7DC2A002CA20F /* Downloader.swift in Sources */,
 				C362A8891D0CCC0F00EAA9FF /* EpisodeChooser.swift in Sources */,
 				C3B03B161E995D8C007B318C /* VideoFileManager.swift in Sources */,
+				C308DA531EB75A5400F32E97 /* Util.swift in Sources */,
 				C362A88B1D0CCD0F00EAA9FF /* EpisodeViewController.swift in Sources */,
 				C35933611D4C5547008BFF94 /* DownloadProgressViewController.swift in Sources */,
 			);

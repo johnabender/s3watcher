@@ -120,7 +120,7 @@ class VideoFileManager: NSObject {
             }
         }
         if index == -1 {
-            print("\(Date().timeIntervalSince1970) \(#file.components(separatedBy: "/").last!) \(#function) just finished playing a file that wasn't in the cache?? \(episode.fileSystemUrl)")
+            Util.log("just finished playing a file that wasn't in the cache?? \(episode.fileSystemUrl)", f: [#file, #function])
         } else {
             episodeCache.remove(at: index)
         }
@@ -170,7 +170,7 @@ class VideoFileManager: NSObject {
             episode.fileSystemUrl = newUrl
             return true
         } catch {
-            print("\(Date().timeIntervalSince1970) \(#file.components(separatedBy: "/").last!) \(#function) failed moving item from \(episode.fileSystemUrl) to \(newUrl)")
+            Util.log("failed moving item from \(episode.fileSystemUrl) to \(newUrl)", f: [#file, #function])
             return false
         }
     }

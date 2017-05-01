@@ -28,13 +28,13 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
     }
 
     func initialize() {
-        print("initializing")
+        Util.log("initializing", f: [#file, #function])
         Downloader.sharedDownloader().fetchGroupList { (error: Error?, list: [String]?) in
             OperationQueue.main.addOperation({ () -> Void in
                 self.spinner?.stopAnimating()
             })
             if error != nil {
-                print("\(Date().timeIntervalSince1970) \(#file.components(separatedBy: "/").last!) \(#function) error fetching group list", error!)
+                Util.log("error fetching group list", error!, f: [#file, #function])
                 let alert = UIAlertController(title: "Connection error",
                     message: error!.localizedDescription,
                     preferredStyle: .alert)

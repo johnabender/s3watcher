@@ -21,15 +21,15 @@ class DownloadProgressMonitor: NSObject {
             let attributes = a as NSDictionary?
             if attributes != nil {
                 let curSize = Float64(attributes!.fileSize())
-                print(curSize/self.episode.size, self.episode)
+                Util.log(curSize/self.episode.size, self.episode, f: [#file, #function])
                 if curSize >= 0.0 && curSize <= self.episode.size {
                     return curSize/self.episode.size
                 }
-                else { print("\(Date().timeIntervalSince1970) \(#file.components(separatedBy: "/").last!) \(#function) not updating progress - ", curSize, self.episode.size) }
+                else { Util.log("not updating progress - ", curSize, self.episode.size, f: [#file, #function]) }
             }
-            else { print("\(Date().timeIntervalSince1970) \(#file.components(separatedBy: "/").last!) \(#function) not continuing - no attributes") }
+            else { Util.log("not continuing - no attributes", f: [#file, #function]) }
         }
-        else { print("\(Date().timeIntervalSince1970) \(#file.components(separatedBy: "/").last!) \(#function) no item at tempurl path") }
+        else { Util.log("no item at tempurl path", f: [#file, #function]) }
 
         return 0.0
     }
