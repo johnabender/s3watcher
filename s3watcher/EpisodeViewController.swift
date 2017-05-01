@@ -58,8 +58,19 @@ class EpisodeViewController: UIViewController, EpisodeChooserDelegate {
         }
     }
 
+    override func viewDidAppear(_ animated: Bool) {
+        Util.log(f: [#file, #function])
+        if self.progressVC != nil {
+            // Menu pressed during inital episode download. This VC is unusable
+            // and user probably wants to make another group selection anyway.
+            Util.log("hid progress, popping self", f: [#file, #function])
+            self.navigationController?.popViewController(animated: false)
+        }
+        super.viewDidAppear(animated)
+    }
+
     override func viewWillDisappear(_ animated: Bool) {
-        Util.log("will disappear", f: [#file, #function])
+        Util.log(f: [#file, #function])
         self.avPlayerVC?.player?.pause()
         if let item = self.avPlayerVC?.player?.currentItem as AVPlayerItem!,
             let asset = item.asset as? AVURLAsset {
