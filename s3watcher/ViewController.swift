@@ -19,9 +19,9 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
         super.viewDidLoad()
 
         // why doesn't the navigation bar's "title color" in the storyboard do this??
-        if var a = self.navigationController?.navigationBar.titleTextAttributes as [String: Any]! {
-            a[NSForegroundColorAttributeName] = UIColor.white
-            self.navigationController?.navigationBar.titleTextAttributes = a
+        if var a = convertFromOptionalNSAttributedStringKeyDictionary(self.navigationController?.navigationBar.titleTextAttributes) {
+            a[convertFromNSAttributedStringKey(NSAttributedString.Key.foregroundColor)] = UIColor.white
+            self.navigationController?.navigationBar.titleTextAttributes = convertToOptionalNSAttributedStringKeyDictionary(a)
         }
 
         self.initialize()
@@ -38,7 +38,7 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
                 let alert = UIAlertController(title: "Connection error",
                     message: error!.localizedDescription,
                     preferredStyle: .alert)
-                alert.addAction(UIAlertAction(title:"Retry", style:.default, handler:{(action: UIAlertAction) -> Void in
+                alert.addAction(UIAlertAction(title: "Retry", style: .default, handler:{(action: UIAlertAction) -> Void in
                     self.dismiss(animated: true, completion: {() -> Void in
                         self.initialize()
                     })
@@ -83,3 +83,20 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
     }
 }
 
+
+// Helper function inserted by Swift 4.2 migrator.
+fileprivate func convertFromOptionalNSAttributedStringKeyDictionary(_ input: [NSAttributedString.Key: Any]?) -> [String: Any]? {
+	guard let input = input else { return nil }
+	return Dictionary(uniqueKeysWithValues: input.map {key, value in (key.rawValue, value)})
+}
+
+// Helper function inserted by Swift 4.2 migrator.
+fileprivate func convertFromNSAttributedStringKey(_ input: NSAttributedString.Key) -> String {
+	return input.rawValue
+}
+
+// Helper function inserted by Swift 4.2 migrator.
+fileprivate func convertToOptionalNSAttributedStringKeyDictionary(_ input: [String: Any]?) -> [NSAttributedString.Key: Any]? {
+	guard let input = input else { return nil }
+	return Dictionary(uniqueKeysWithValues: input.map { key, value in (NSAttributedString.Key(rawValue: key), value)})
+}

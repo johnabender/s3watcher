@@ -9,36 +9,22 @@
 import Foundation
 
 protocol EpisodeChooserDelegate : class {
-    func episodeDownloaded(_ episode: Episode)
-    func episodeDownloadStarted(_ monitor: DownloadProgressMonitor)
+    func episodeListCreated(_ episodes: [Episode])
     func downloadError(_ error: Error)
 }
 
 class EpisodeChooser: NSObject {
-    var isChoosing = false
+    fileprivate var isChoosing = false
 
-    var group: String? = nil
-    var ratingsURL: URL? = nil
-    var episodeList: [Episode]? = nil
+    fileprivate var group: String? = nil
+    fileprivate var episodeList: [Episode]? = nil
 
     var delegate: EpisodeChooserDelegate? = nil
 
-    // called when a new group is selected, initialize and kick off downloads
-    func startDownloads(_ group: String) {
-
-        // first, perform callbacks if locally cached episodes are present
-        VideoFileManager.sharedManager().warmCache(group: group)
-        if let episode = VideoFileManager.sharedManager().firstQueuedEpisode() {
-            self.delegate?.episodeDownloaded(episode)
-            if let anotherEpisode = VideoFileManager.sharedManager().secondQueuedEpisode() {
-                self.delegate?.episodeDownloaded(anotherEpisode)
-            }
-        }
-
+    func choseGroup(_ group: String) {
         // note race condition if isChoosing
         self.group = group
-        ratingsURL = nil
-        episodeList = nil
+        self.episodeList = nil
 
         objc_sync_enter(self)
         if isChoosing {
@@ -50,37 +36,15 @@ class EpisodeChooser: NSObject {
             objc_sync_exit(self)
         }
 
-        var gotRatings = false
-        var gotEpisodes = false
-
-        func completeAndPrefetch() {
-            if gotRatings && gotEpisodes {
+        Downloader.sharedDownloader().fetchListForGroup(group) { (error: Error?, list: [Episode]?) -> () in
+            if error == nil {
+                self.episodeList = list
                 objc_sync_enter(self)
                 self.isChoosing = false
                 objc_sync_exit(self)
                 if self.episodeList != nil {
-                    self.prefetchEpisodes(1)
+                    self.delegate?.episodeListCreated(self.randomizeList())
                 }
-            }
-        }
-
-        Downloader.sharedDownloader().fetchRatingsForGroup(group) { (error: Error?, ratingFile: URL?) -> () in
-            gotRatings = true
-            if error == nil {
-                self.ratingsURL = ratingFile
-                completeAndPrefetch()
-            }
-            else {
-                Util.log("ratings download error:", error!, f: [#file, #function])
-                completeAndPrefetch()
-            }
-        }
-
-        Downloader.sharedDownloader().fetchListForGroup(group) { (error: Error?, list: [Episode]?) -> () in
-            gotEpisodes = true
-            if error == nil {
-                self.episodeList = list
-                completeAndPrefetch()
             }
             else {
                 Util.log("list download error", error!, f: [#file, #function])
@@ -89,53 +53,26 @@ class EpisodeChooser: NSObject {
         }
     }
 
-    // called when resuming a paused playback, ensure downloads are running
-    func startBackgroundFetch(_ group: String) {
-        self.startDownloads(group)
-    }
-
     func finishedViewing(_ episode: Episode) {
-        VideoFileManager.sharedManager().episodeCompleted(episode)
+        // TODO: update last-played dates
+        // TODO: update ratings?
+        Util.log("finished", episode, f: [#file, #function])
     }
 
-    fileprivate func chooseEpisodeFromList() -> Episode {
-        var episodes = self.episodeList!
-
+    fileprivate func randomizeList() -> [Episode] {
         // TODO: choose based on ratings, if available
-        let r = Int(arc4random_uniform(UInt32(episodes.count)))
-        return episodes[r]
-    }
-
-    fileprivate func fetchOne() {
-        let episode = self.chooseEpisodeFromList()
-        Downloader.sharedDownloader().fetchMovie(episode, initialization: { (monitor: DownloadProgressMonitor) in
-            self.delegate?.episodeDownloadStarted(monitor)
-        }, completion: { (error: Error?, movie: Episode?) in
-            if error != nil {
-                Util.log("error fetching:", error!, f: [#file, #function])
-            }
-
-            var shouldContinueDownloading = true
-            if movie != nil {
-                Util.log("movie downloaded", movie!, f: [#file, #function])
-                shouldContinueDownloading = VideoFileManager.sharedManager().episodeDownloaded(movie!)
-                self.delegate?.episodeDownloaded(movie!)
-            }
-
-            if shouldContinueDownloading {
-                self.prefetchEpisodes(2)
-            }
-        })
-    }
-
-    fileprivate func prefetchEpisodes(_ n: Int) {
-        for _ in 0 ..< n {
-            if Downloader.sharedDownloader().downloadingMovies.count >= Downloader.maxConcurrentDownloads {
-                Util.log("already downloading max concurrent files, not prefetching another", f: [#file, #function])
-                break
-            }
-
-            self.fetchOne()
+        var ind: [Int] = []
+        for i in 0..<self.episodeList!.count {
+            ind.append(i)
         }
+
+        var episodes: [Episode] = []
+        while ind.count > 0 {
+            let i = Int(arc4random_uniform(UInt32(ind.count)))
+            episodes.append(self.episodeList![ind[i]])
+            ind.remove(at: i)
+        }
+
+        return episodes
     }
 }
