@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		37446C7B21921017003A29F1 /* RatingViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37446C7A21921017003A29F1 /* RatingViewController.swift */; };
 		37649E46215D308A00CBA6FF /* PlayerViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37649E45215D308A00CBA6FF /* PlayerViewController.swift */; };
 		C308DA531EB75A5400F32E97 /* Util.swift in Sources */ = {isa = PBXBuildFile; fileRef = C308DA521EB75A5400F32E97 /* Util.swift */; };
 		C362A8891D0CCC0F00EAA9FF /* EpisodeChooser.swift in Sources */ = {isa = PBXBuildFile; fileRef = C362A8881D0CCC0F00EAA9FF /* EpisodeChooser.swift */; };
@@ -23,6 +24,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		37446C7A21921017003A29F1 /* RatingViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RatingViewController.swift; sourceTree = "<group>"; };
 		37649E45215D308A00CBA6FF /* PlayerViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerViewController.swift; sourceTree = "<group>"; };
 		C308DA521EB75A5400F32E97 /* Util.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Util.swift; sourceTree = "<group>"; };
 		C362A8881D0CCC0F00EAA9FF /* EpisodeChooser.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EpisodeChooser.swift; sourceTree = "<group>"; };
@@ -85,6 +87,7 @@
 				C3705EB91BF7D9BE002CA20F /* ViewController.swift */,
 				C3CA8E091DFCCC4E0015AF4B /* Episode.swift */,
 				C362A88A1D0CCD0F00EAA9FF /* EpisodeViewController.swift */,
+				37446C7A21921017003A29F1 /* RatingViewController.swift */,
 				C362A8881D0CCC0F00EAA9FF /* EpisodeChooser.swift */,
 				C3705EE61BF7DC2A002CA20F /* Downloader.swift */,
 				C308DA521EB75A5400F32E97 /* Util.swift */,
@@ -196,6 +199,7 @@
 				C3705EE71BF7DC2A002CA20F /* Downloader.swift in Sources */,
 				C362A8891D0CCC0F00EAA9FF /* EpisodeChooser.swift in Sources */,
 				C308DA531EB75A5400F32E97 /* Util.swift in Sources */,
+				37446C7B21921017003A29F1 /* RatingViewController.swift in Sources */,
 				C362A88B1D0CCD0F00EAA9FF /* EpisodeViewController.swift in Sources */,
 				37649E46215D308A00CBA6FF /* PlayerViewController.swift in Sources */,
 			);

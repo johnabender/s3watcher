@@ -13,7 +13,7 @@ private let pausedMovieGroupDefaultsKey = "pausedMovieGroup"
 private let pausedMovieUrlDefaultsKey = "pausedMovieUrl"
 private let pausedMovieTimeDefaultsKey = "pausedMovieTime"
 
-class EpisodeViewController: UIViewController, EpisodeChooserDelegate {
+class EpisodeViewController: UIViewController, AVPlayerViewControllerDelegate, RatingDelegate, EpisodeChooserDelegate {
     var group: String = ""
 
     let episodeChooser = EpisodeChooser()
@@ -74,13 +74,57 @@ class EpisodeViewController: UIViewController, EpisodeChooserDelegate {
         UserDefaults.standard.set(nil, forKey: pausedMovieUrlDefaultsKey)
     }
 
+    func newPlayerWithItems(_ items: [AVPlayerItem]) -> AVPlayerViewController {
+        let vc = AVPlayerViewController()
+
+        vc.delegate = self
+
+        let storyboard = UIStoryboard(name: "Main", bundle: nil)
+        if let ratingVC = storyboard.instantiateViewController(withIdentifier: "RatingViewController") as? RatingViewController {
+            ratingVC.delegate = self
+            vc.customInfoViewController = ratingVC
+        }
+        else { Util.log("failed loading rating vc", f: [#file, #function]) }
+
+
+        vc.player = AVQueuePlayer(items: items)
+        vc.player!.actionAtItemEnd = .advance
+        vc.skippingBehavior = .skipItem
+        vc.view.frame = self.view.bounds
+        self.addChild(vc)
+        self.view.addSubview(vc.view)
+        vc.didMove(toParent: self)
+
+        return vc
+    }
+
+    // MARK: - Player Delegate
+    @objc func episodeFinished(_ note: Notification) {
+        if let asset = self.avPlayerVC?.player?.currentItem?.asset as? AVURLAsset {
+            episodeChooser.finishedViewing(Episode(asset.url.absoluteString))
+        }
+        else { Util.log("unable to determine what finished", f: [#file, #function]) }
+    }
+
+    func skipToNextItem(for playerViewController: AVPlayerViewController) {
+        if playerViewController != self.avPlayerVC { return }
+        self.episodeFinished(Notification(name: NSNotification.Name.AVPlayerItemDidPlayToEndTime))
+        if let qp = self.avPlayerVC?.player as? AVQueuePlayer {
+            qp.advanceToNextItem()
+        }
+    }
+
+    // MARK: - Episode Chooser Delegate
     func episodeListCreated(_ episodes: [Episode]) {
         Util.log(episodes, f: [#file, #function])
         if episodes.count < 1 { return } // TODO: handle
 
         var items: [AVPlayerItem] = []
         for episode in episodes {
-            items.append(AVPlayerItem(url: episode.publicUrl))
+            let item = AVPlayerItem(url: episode.publicUrl)
+            // externalMetadata
+            // nextContentProposal
+            items.append(item)
         }
 
         // if no saved time, start at 0
@@ -89,13 +133,8 @@ class EpisodeViewController: UIViewController, EpisodeChooserDelegate {
 
         NotificationCenter.default.addObserver(self, selector: #selector(EpisodeViewController.episodeFinished(_:)), name: NSNotification.Name.AVPlayerItemDidPlayToEndTime, object: nil)
         OperationQueue.main.addOperation({ () -> Void in
-            self.avPlayerVC = AVPlayerViewController()
-            self.avPlayerVC!.player = AVQueuePlayer(items: items)
-            self.avPlayerVC!.player!.actionAtItemEnd = .advance
-            self.avPlayerVC!.view.frame = self.view.bounds
-            self.addChild(self.avPlayerVC!)
-            self.view.addSubview(self.avPlayerVC!.view)
-            self.avPlayerVC!.didMove(toParent: self)
+            self.avPlayerVC = self.newPlayerWithItems(items)
+
             if pausedTime > 0.0 {
                 let time = CMTimeMakeWithSeconds(Float64(pausedTime), preferredTimescale: 60)
                 self.avPlayerVC!.player!.seek(to: time)
@@ -124,10 +163,8 @@ class EpisodeViewController: UIViewController, EpisodeChooserDelegate {
         })
     }
 
-    @objc func episodeFinished(_ note: Notification) {
-        if let asset = self.avPlayerVC?.player?.currentItem?.asset as? AVURLAsset {
-            episodeChooser.finishedViewing(Episode(asset.url.absoluteString))
-        }
-        else { Util.log("unable to determine what finished", f: [#file, #function]) }
+    // MARK: - Rating Delegate
+    func ratingSelected(_ rating: Int) {
+        Util.log(rating, f: [#file, #function])
     }
 }

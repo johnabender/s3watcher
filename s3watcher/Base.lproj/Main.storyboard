@@ -1,11 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder.AppleTV.Storyboard" version="3.0" toolsVersion="14313.18" targetRuntime="AppleTV" propertyAccessControl="none" useAutolayout="YES" colorMatched="YES" initialViewController="lR4-s4-huJ">
+<document type="com.apple.InterfaceBuilder.AppleTV.Storyboard" version="3.0" toolsVersion="14460.31" targetRuntime="AppleTV" propertyAccessControl="none" useAutolayout="YES" colorMatched="YES" initialViewController="lR4-s4-huJ">
     <device id="appleTV" orientation="landscape">
         <adaptation id="light"/>
     </device>
     <dependencies>
-        <deployment identifier="tvOS"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="14283.14"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="14460.20"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <scenes>
@@ -94,5 +93,100 @@
             </objects>
             <point key="canvasLocation" x="245" y="1715"/>
         </scene>
+        <!--Rating View Controller-->
+        <scene sceneID="XT6-I3-kLl">
+            <objects>
+                <viewController storyboardIdentifier="RatingViewController" id="baW-49-THY" customClass="RatingViewController" customModule="s3watcher" customModuleProvider="target" sceneMemberID="viewController">
+                    <layoutGuides>
+                        <viewControllerLayoutGuide type="top" id="ap4-Om-Otb"/>
+                        <viewControllerLayoutGuide type="bottom" id="qU2-Ns-JqD"/>
+                    </layoutGuides>
+                    <view key="view" contentMode="scaleToFill" id="Kt3-nG-ScZ">
+                        <rect key="frame" x="0.0" y="0.0" width="1920" height="200"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <subviews>
+                            <button opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" reversesTitleShadowWhenHighlighted="YES" showsTouchWhenHighlighted="YES" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="a7D-s5-dcP">
+                                <rect key="frame" x="524" y="52" width="96" height="96"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <inset key="contentEdgeInsets" minX="40" minY="20" maxX="40" maxY="20"/>
+                                <state key="normal" backgroundImage="RatingStarEmpty"/>
+                                <state key="selected" backgroundImage="RatingStarFilled"/>
+                                <state key="focused" backgroundImage="RatingStarFilledHighlight"/>
+                                <connections>
+                                    <action selector="ratingButtonPressed:" destination="baW-49-THY" eventType="primaryActionTriggered" id="fuf-6K-Gkw"/>
+                                </connections>
+                            </button>
+                            <button opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" reversesTitleShadowWhenHighlighted="YES" showsTouchWhenHighlighted="YES" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="cgt-ma-p4x">
+                                <rect key="frame" x="634" y="52" width="96" height="96"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <inset key="contentEdgeInsets" minX="40" minY="20" maxX="40" maxY="20"/>
+                                <state key="normal" backgroundImage="RatingStarEmpty"/>
+                                <state key="selected" backgroundImage="RatingStarFilled"/>
+                                <state key="focused" backgroundImage="RatingStarFilledHighlight"/>
+                                <connections>
+                                    <action selector="ratingButtonPressed:" destination="baW-49-THY" eventType="primaryActionTriggered" id="vD3-ga-Hwu"/>
+                                </connections>
+                            </button>
+                            <button opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" reversesTitleShadowWhenHighlighted="YES" showsTouchWhenHighlighted="YES" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="WPd-5N-3uW">
+                                <rect key="frame" x="744" y="52" width="96" height="96"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <inset key="contentEdgeInsets" minX="40" minY="20" maxX="40" maxY="20"/>
+                                <state key="normal" backgroundImage="RatingStarEmpty"/>
+                                <state key="selected" backgroundImage="RatingStarFilled"/>
+                                <state key="focused" backgroundImage="RatingStarFilledHighlight"/>
+                                <connections>
+                                    <action selector="ratingButtonPressed:" destination="baW-49-THY" eventType="primaryActionTriggered" id="Avo-yl-qGu"/>
+                                </connections>
+                            </button>
+                            <button opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" reversesTitleShadowWhenHighlighted="YES" showsTouchWhenHighlighted="YES" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="5fz-C2-krZ">
+                                <rect key="frame" x="854" y="53" width="96" height="96"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <inset key="contentEdgeInsets" minX="40" minY="20" maxX="40" maxY="20"/>
+                                <state key="normal" backgroundImage="RatingStarEmpty"/>
+                                <state key="selected" backgroundImage="RatingStarFilled"/>
+                                <state key="focused" backgroundImage="RatingStarFilledHighlight"/>
+                                <connections>
+                                    <action selector="ratingButtonPressed:" destination="baW-49-THY" eventType="primaryActionTriggered" id="Whh-Fo-ZKR"/>
+                                </connections>
+                            </button>
+                            <button opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" reversesTitleShadowWhenHighlighted="YES" showsTouchWhenHighlighted="YES" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="jgO-5V-OIA">
+                                <rect key="frame" x="964" y="52" width="96" height="96"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <inset key="contentEdgeInsets" minX="40" minY="20" maxX="40" maxY="20"/>
+                                <state key="normal" backgroundImage="RatingStarEmpty"/>
+                                <state key="selected" backgroundImage="RatingStarFilled"/>
+                                <state key="focused" backgroundImage="RatingStarFilledHighlight"/>
+                                <connections>
+                                    <action selector="ratingButtonPressed:" destination="baW-49-THY" eventType="primaryActionTriggered" id="uer-nR-5XI"/>
+                                </connections>
+                            </button>
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" text="Rate this episode:" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="LXx-ar-5J8">
+                                <rect key="frame" x="38" y="60" width="441" height="80"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <fontDescription key="fontDescription" style="UICTFontTextStyleTitle2"/>
+                                <nil key="textColor"/>
+                                <nil key="highlightedColor"/>
+                            </label>
+                        </subviews>
+                    </view>
+                    <freeformSimulatedSizeMetrics key="simulatedDestinationMetrics"/>
+                    <size key="freeformSize" width="1920" height="200"/>
+                    <connections>
+                        <outlet property="button1" destination="a7D-s5-dcP" id="l4u-Ze-xJv"/>
+                        <outlet property="button2" destination="cgt-ma-p4x" id="Z5r-ms-dAI"/>
+                        <outlet property="button3" destination="WPd-5N-3uW" id="TjE-fU-FgB"/>
+                        <outlet property="button4" destination="5fz-C2-krZ" id="fAU-Hx-yfK"/>
+                        <outlet property="button5" destination="jgO-5V-OIA" id="Uoc-Rc-Wf8"/>
+                    </connections>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="vRu-3N-2Zd" userLabel="First Responder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="2345" y="1275"/>
+        </scene>
     </scenes>
+    <resources>
+        <image name="RatingStarEmpty" width="256" height="256"/>
+        <image name="RatingStarFilled" width="256" height="256"/>
+        <image name="RatingStarFilledHighlight" width="256" height="256"/>
+    </resources>
 </document>

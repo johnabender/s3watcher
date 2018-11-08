@@ -28,7 +28,6 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
     }
 
     func initialize() {
-        Util.log(f: [#file, #function])
         Downloader.sharedDownloader().fetchGroupList { (error: Error?, list: [String]?) in
             OperationQueue.main.addOperation({ () -> Void in
                 self.spinner?.stopAnimating()
