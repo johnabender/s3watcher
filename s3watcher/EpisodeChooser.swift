@@ -14,37 +14,20 @@ protocol EpisodeChooserDelegate : class {
 }
 
 class EpisodeChooser: NSObject {
-    fileprivate var isChoosing = false
-
-    fileprivate var group: String? = nil
-    fileprivate var episodeList: [Episode]? = nil
+    private var group: String
+    private var episodeList: [Episode]? = nil
 
     var delegate: EpisodeChooserDelegate? = nil
 
-    func choseGroup(_ group: String) {
-        // note race condition if isChoosing
+    init(group: String) {
         self.group = group
-        self.episodeList = nil
+        super.init()
+    }
 
-        objc_sync_enter(self)
-        if isChoosing {
-            objc_sync_exit(self)
-            return
-        }
-        else {
-            isChoosing = true
-            objc_sync_exit(self)
-        }
-
-        Downloader.sharedDownloader().fetchListForGroup(group) { (error: Error?, list: [Episode]?) -> () in
+    func createEpisodeList() {
+        Downloader.sharedDownloader().fetchListForGroup(group) { (error: Error?, list: [String]?) -> () in
             if error == nil {
-                self.episodeList = list
-                objc_sync_enter(self)
-                self.isChoosing = false
-                objc_sync_exit(self)
-                if self.episodeList != nil {
-                    self.delegate?.episodeListCreated(self.randomizeList())
-                }
+                self.delegate?.episodeListCreated(self.randomizeList(list!))
             }
             else {
                 Util.log("list download error", error!, f: [#file, #function])
@@ -53,24 +36,58 @@ class EpisodeChooser: NSObject {
         }
     }
 
-    func finishedViewing(_ episode: Episode) {
-        // TODO: update last-played dates
-        // TODO: update ratings?
-        Util.log("finished", episode, f: [#file, #function])
+    func createEpisodeListStartingWith(url: URL) {
+        let firstEpisode = Episode(group: self.group, key: url.relativePath)
+        Util.log("trying to resume with", firstEpisode, f: [#file, #function])
+
+        Downloader.sharedDownloader().fetchListForGroup(group) { (error: Error?, list: [String]?) -> () in
+            if error == nil {
+                var episodeList = self.randomizeList(list!)
+                for (i, e) in episodeList.enumerated() {
+                    if e.publicUrl == firstEpisode.publicUrl {
+                        episodeList.remove(at: i)
+                    }
+                }
+                episodeList.insert(firstEpisode, at: 0)
+                self.delegate?.episodeListCreated(episodeList)
+            }
+            else {
+                Util.log("list download error", error!, f: [#file, #function])
+                self.delegate?.downloadError(error!)
+            }
+        }
     }
 
-    fileprivate func randomizeList() -> [Episode] {
-        // TODO: choose based on ratings, if available
-        var ind: [Int] = []
-        for i in 0..<self.episodeList!.count {
-            ind.append(i)
+    private func randomizeList(_ list: [String]) -> [Episode] {
+        let debugRandomization = false
+        if debugRandomization { Util.log("raw list:", list, f: [#file, #function]) }
+
+        var candidates: [Episode] = []
+        for key in list {
+            let episode = Episode(group: self.group, key: key)
+            var score = Double(10*max(1, episode.rating))
+            let maxOldest = 60.0*60.0*24.0*365.0*2.0
+            score *= min(maxOldest, -episode.lastPlayed.timeIntervalSinceNow)/maxOldest
+            for _ in 0..<max(1, Int(score.rounded())) {
+                candidates.append(episode)
+            }
+            if debugRandomization { Util.log(key, "rating", episode.rating, "last played", episode.lastPlayed, "score", score, f: [#file, #function]) }
         }
+        if debugRandomization { Util.log("weighted list:", candidates, f: [#file, #function]) }
 
         var episodes: [Episode] = []
-        while ind.count > 0 {
-            let i = Int(arc4random_uniform(UInt32(ind.count)))
-            episodes.append(self.episodeList![ind[i]])
-            ind.remove(at: i)
+        while episodes.count < list.count {
+            let match = candidates[Int(arc4random_uniform(UInt32(candidates.count)))]
+            episodes.append(match)
+            for i in (0..<candidates.count).reversed() {
+                if candidates[i].publicUrl == match.publicUrl {
+                    candidates.remove(at: i)
+                }
+            }
+            if debugRandomization {
+                Util.log("randomized list:", episodes, f: [#file, #function])
+                Util.log("remaining list:", candidates, f: [#file, #function])
+            }
         }
 
         return episodes

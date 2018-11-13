@@ -86,9 +86,9 @@
 				37649E45215D308A00CBA6FF /* PlayerViewController.swift */,
 				C3705EB91BF7D9BE002CA20F /* ViewController.swift */,
 				C3CA8E091DFCCC4E0015AF4B /* Episode.swift */,
+				C362A8881D0CCC0F00EAA9FF /* EpisodeChooser.swift */,
 				C362A88A1D0CCD0F00EAA9FF /* EpisodeViewController.swift */,
 				37446C7A21921017003A29F1 /* RatingViewController.swift */,
-				C362A8881D0CCC0F00EAA9FF /* EpisodeChooser.swift */,
 				C3705EE61BF7DC2A002CA20F /* Downloader.swift */,
 				C308DA521EB75A5400F32E97 /* Util.swift */,
 				C3705EBB1BF7D9BE002CA20F /* Main.storyboard */,
@@ -328,6 +328,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = "App Icon & Top Shelf Image";
 				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = LaunchImage;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				"CODE_SIGN_IDENTITY[sdk=appletvos*]" = "iPhone Developer";
 				DEVELOPMENT_TEAM = 4FF5GW8T44;
@@ -351,6 +352,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = "App Icon & Top Shelf Image";
 				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = LaunchImage;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				"CODE_SIGN_IDENTITY[sdk=appletvos*]" = "iPhone Developer";
 				DEVELOPMENT_TEAM = 4FF5GW8T44;

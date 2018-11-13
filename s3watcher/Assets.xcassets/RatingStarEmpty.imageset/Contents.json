@@ -2,12 +2,12 @@
   "images" : [
     {
       "idiom" : "tv",
-      "filename" : "Favorite_256x256-2.png",
+      "filename" : "star-outline-white-1.png",
       "scale" : "1x"
     },
     {
       "idiom" : "tv",
-      "filename" : "Favorite_256x256.png",
+      "filename" : "star-outline-white.png",
       "scale" : "2x"
     }
   ],

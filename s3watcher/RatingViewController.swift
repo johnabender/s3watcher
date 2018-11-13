@@ -19,6 +19,9 @@ class RatingViewController: UIViewController {
     @IBOutlet weak var button4: UIButton?
     @IBOutlet weak var button5: UIButton?
 
+    @IBOutlet weak var titleLabel: UILabel?
+    var episodeTitle = ""
+
     override var preferredFocusEnvironments: [UIFocusEnvironment] {
         Util.log(f: [#file, #function]) // not called! :(
         if self.button1 != nil && self.button2 != nil && self.button3 != nil && self.button4 != nil && self.button5 != nil {
@@ -28,19 +31,25 @@ class RatingViewController: UIViewController {
         return []
     }
 
-    var currentRating = 0
+    var currentRating = 0 {
+        didSet {
+            self.setDefaultImagesForRating()
+        }
+    }
 
-    fileprivate let emptyImg = UIImage(named: "RatingStarEmpty")
-    fileprivate let filledImg = UIImage(named: "RatingStarFilled")
+    private let emptyImg = UIImage(named: "RatingStarEmpty")
+    private let filledImg = UIImage(named: "RatingStarFilled")
 
     var delegate: RatingDelegate?
 
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        self.preferredContentSize = CGSize(width: 0, height: 200) // width is auto-set
+        self.preferredContentSize = CGSize(width: 0, height: 120) // width is auto-set
 
         self.setDefaultImagesForRating()
+
+        self.titleLabel?.text = self.episodeTitle
     }
 
     override func didUpdateFocus(in context: UIFocusUpdateContext, with coordinator: UIFocusAnimationCoordinator) {
@@ -51,22 +60,17 @@ class RatingViewController: UIViewController {
         switch context.nextFocusedView {
         case nil: return
         case self.button1:
-            Util.log("button 1", f: [#file, #function])
+            break
         case self.button2:
-            Util.log("button 2", f: [#file, #function])
             self.setFilledImagesForButtonsThrough(1)
         case self.button3:
-            Util.log("button 3", f: [#file, #function])
             self.setFilledImagesForButtonsThrough(2)
         case self.button4:
-            Util.log("button 4", f: [#file, #function])
             self.setFilledImagesForButtonsThrough(3)
         case self.button5:
-            Util.log("button 5", f: [#file, #function])
             self.setFilledImagesForButtonsThrough(4)
         default:
             self.setDefaultImagesForRating()
-            Util.log("some other focus", f: [#file, #function])
         }
     }
 

@@ -60,7 +60,7 @@ class Downloader: NSObject {
         })
     }
 
-    func fetchListForGroup(_ group: String, completion: ((Error?, [Episode]?)->())?) {
+    func fetchListForGroup(_ group: String, completion: ((Error?, [String]?)->())?) {
 
         let listRequest = AWSS3ListObjectsRequest()
         listRequest?.bucket = bucketName
@@ -71,19 +71,18 @@ class Downloader: NSObject {
                     completion?(task.error, nil)
                 }
                 else if task.exception != nil {
-                    Util.log("list exception", task.exception, f: [#file, #function])
+                    Util.log("list exception... skipping", task.exception, f: [#file, #function])
                 }
                 else if task.result != nil {
                     let contents : Array = (task.result as AnyObject).contents
-                    var list: [Episode] = []
+                    var list: [String] = []
                     for obj in contents {
                         if let s3obj = obj as? AWSS3Object {
                             if s3obj.size != 0,
                                 s3obj.key.hasSuffix(".m3u8"),
                                 !s3obj.key.hasSuffix("-480p.m3u8")
                             {
-                                let episode = Episode(s3obj.key!)
-                                list.append(episode)
+                                list.append(s3obj.key!)
                             }
                         }
                     }
