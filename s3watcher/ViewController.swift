@@ -24,11 +24,70 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
             self.navigationController?.navigationBar.titleTextAttributes = convertToOptionalNSAttributedStringKeyDictionary(a)
         }
 
-        self.initialize()
+        let (accessKeyId, secretAccessKey, bucketName) = Downloader.storedCredentials()
+        if accessKeyId != nil, accessKeyId!.count > 0,
+            secretAccessKey != nil, secretAccessKey!.count > 0,
+            bucketName != nil, bucketName!.count > 0 {
+            self.initialize()
+        }
+        else {
+            self.promptForCredentials(accessKeyId: accessKeyId, secretAccessKey: secretAccessKey, bucketName: bucketName)
+        }
     }
 
     func initialize() {
-        Downloader.sharedDownloader().fetchGroupList { (error: Error?, list: [String]?) in
+        Util.log("initializing downloader", f: [#file, #function])
+        let (accessKeyId, secretAccessKey, bucketName) = Downloader.storedCredentials()
+        Downloader.shared.initialize(accessKeyId: accessKeyId!, secretAccessKey: secretAccessKey!, bucketName: bucketName!)
+        self.fetchGroupList()
+    }
+
+    func promptForCredentials(accessKeyId: String?, secretAccessKey: String?, bucketName: String?) {
+        let alert = UIAlertController(title: "Enter credentials",
+                                      message: "To watch videos, they must be hosted in Amazon S3 and you must have proper credentials to access them.\n\nPlease enter an access key ID, a secret access key, and an S3 bucket name.",
+                                      preferredStyle: .alert)
+        alert.addTextField { (textField: UITextField) in
+            textField.placeholder = "Access Key ID"
+            textField.text = accessKeyId
+        }
+        alert.addTextField { (textField: UITextField) in
+            textField.placeholder = "Secret Access Key"
+            textField.text = secretAccessKey
+        }
+        alert.addTextField { (textField: UITextField) in
+            textField.placeholder = "Bucket Name"
+            textField.text = bucketName
+        }
+        alert.addAction(UIAlertAction(title: "Go", style: .default, handler:{(action: UIAlertAction) -> Void in
+            self.dismiss(animated: true, completion: nil)
+
+            var idEntry, keyEntry, bucketEntry: String?
+            for i in 0..<alert.textFields!.count {
+                switch i {
+                case 0: idEntry = alert.textFields?[i].text
+                case 1: keyEntry = alert.textFields?[i].text
+                case 2: bucketEntry = alert.textFields?[i].text
+                default: break
+                }
+            }
+            if idEntry != nil, idEntry!.count > 0,
+                keyEntry != nil, keyEntry!.count > 0,
+                bucketEntry != nil, bucketEntry!.count > 0 {
+                Util.log("saving credentials", f: [#file, #function])
+                Downloader.setStoredCredentials(accessKeyId: idEntry!, secretAccessKey: keyEntry!, bucketName: bucketEntry!)
+                self.initialize()
+            }
+            else {
+                self.promptForCredentials(accessKeyId: idEntry, secretAccessKey: keyEntry, bucketName: bucketEntry)
+            }
+        }))
+        OperationQueue.main.addOperation({ () -> Void in
+            self.present(alert, animated: true, completion: nil)
+        })
+    }
+
+    func fetchGroupList() {
+        Downloader.shared.fetchGroupList { (error: Error?, list: [String]?) in
             OperationQueue.main.addOperation({ () -> Void in
                 self.spinner?.stopAnimating()
             })
@@ -38,9 +97,10 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
                     message: error!.localizedDescription,
                     preferredStyle: .alert)
                 alert.addAction(UIAlertAction(title: "Retry", style: .default, handler:{(action: UIAlertAction) -> Void in
-                    self.dismiss(animated: true, completion: {() -> Void in
-                        self.initialize()
-                    })
+                    self.dismiss(animated: true, completion: nil)
+                    self.spinner?.startAnimating()
+                    let (accessKeyId, secretAccessKey, bucketName) = Downloader.storedCredentials()
+                    self.promptForCredentials(accessKeyId: accessKeyId, secretAccessKey: secretAccessKey, bucketName: bucketName)
                 }))
                 OperationQueue.main.addOperation({ () -> Void in
                     self.present(alert, animated: true, completion: nil)

@@ -8,34 +8,49 @@
 
 import Foundation
 
-private let accessKeyId = ""
-private let secretAccessKey = ""
-private let bucketName = "bender-video"
+fileprivate let keyIdKey = "S3AccessKeyId"
+fileprivate let secretKeyKey = "S3SecretKey"
+fileprivate let bucketNameKey = "S3BucketName"
 
-private var once = Int()
-
+protocol DownloaderDelegate : class {
+    func downloadListProgress(listCount: Int)
+}
 
 class Downloader: NSObject {
-    private static var __once: () = {
+    static var shared = Downloader()
+
+    fileprivate var bucketName: String?
+
+    weak var delegate: DownloaderDelegate?
+
+    class func storedCredentials() -> (String?, String?, String?) {
+        return (Keychain.loadValueForKey(keyIdKey),
+                Keychain.loadValueForKey(secretKeyKey),
+                Keychain.loadValueForKey(bucketNameKey))
+    }
+
+    class func setStoredCredentials(accessKeyId: String, secretAccessKey: String, bucketName: String) {
+        Keychain.set(value: accessKeyId, forKey: keyIdKey)
+        Keychain.set(value: secretAccessKey, forKey: secretKeyKey)
+        Keychain.set(value: bucketName, forKey: bucketNameKey)
+    }
+
+    func initialize(accessKeyId: String, secretAccessKey: String, bucketName: String) {
+        self.bucketName = bucketName
+
         let credentials = AWSStaticCredentialsProvider(accessKey: accessKeyId, secretKey: secretAccessKey)
         let config = AWSServiceConfiguration(region: .usWest2, credentialsProvider: credentials)
 
         AWSS3.register(with: config, forKey: "s3")
         AWSS3TransferManager.register(with: config, forKey: "downloadMgr")
-    }()
-    static var sharedInstance = Downloader()
-
-    class func sharedDownloader() -> Downloader {
-        return sharedInstance
-    }
-
-    override init() {
-        super.init()
-
-        _ = Downloader.__once
     }
 
     func fetchGroupList(_ completion: ((Error?, [String]?)->())?) {
+        guard let bucketName = self.bucketName else {
+            completion?(NSError(domain: "S3DownloaderErrorDomain", code: 1, userInfo: nil), nil)
+            return
+        }
+
         let listRequest = AWSS3ListObjectsRequest()
         listRequest?.bucket = bucketName
         listRequest?.delimiter = "/"
@@ -60,11 +75,16 @@ class Downloader: NSObject {
         })
     }
 
-    func fetchListForGroup(_ group: String, completion: ((Error?, [String]?)->())?) {
+    func fetchListForGroup(_ group: String, startingList: [String] = [], marker: String = "", completion: ((Error?, [String]?)->())?) {
+        guard let bucketName = self.bucketName else {
+            completion?(NSError(domain: "S3DownloaderErrorDomain", code: 1, userInfo: nil), nil)
+            return
+        }
 
         let listRequest = AWSS3ListObjectsRequest()
         listRequest?.bucket = bucketName
         listRequest?.prefix = group
+        listRequest?.marker = marker
         AWSS3.s3(forKey: "s3").listObjects(listRequest).continue(_: { (t: AWSTask?) -> Any? in
             if let task = t {
                 if task.error != nil {
@@ -75,7 +95,7 @@ class Downloader: NSObject {
                 }
                 else if task.result != nil {
                     let contents : Array = (task.result as AnyObject).contents
-                    var list: [String] = []
+                    var list = startingList
                     for obj in contents {
                         if let s3obj = obj as? AWSS3Object {
                             if s3obj.size != 0,
@@ -83,10 +103,17 @@ class Downloader: NSObject {
                                 !s3obj.key.hasSuffix("-480p.m3u8")
                             {
                                 list.append(s3obj.key!)
+                                self.delegate?.downloadListProgress(listCount: list.count)
                             }
                         }
                     }
-                    completion?(nil, list)
+                    if (task.result as AnyObject).isTruncated == 1, let lastObj = contents.last as? AWSS3Object {
+                        Util.log("fetching another page starting with", lastObj.key, f: [#file, #function])
+                        self.fetchListForGroup(group, startingList: list, marker: lastObj.key, completion: completion)
+                    }
+                    else {
+                        completion?(nil, list)
+                    }
                 }
                 else {
                     Util.log("no error, but no result... skipping", f: [#file, #function])

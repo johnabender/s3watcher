@@ -17,7 +17,7 @@ class EpisodeChooser: NSObject {
     private var group: String
     private var episodeList: [Episode]? = nil
 
-    var delegate: EpisodeChooserDelegate? = nil
+    weak var delegate: EpisodeChooserDelegate? = nil
 
     init(group: String) {
         self.group = group
@@ -25,7 +25,7 @@ class EpisodeChooser: NSObject {
     }
 
     func createEpisodeList() {
-        Downloader.sharedDownloader().fetchListForGroup(group) { (error: Error?, list: [String]?) -> () in
+        Downloader.shared.fetchListForGroup(group) { (error: Error?, list: [String]?) -> () in
             if error == nil {
                 self.delegate?.episodeListCreated(self.randomizeList(list!))
             }
@@ -40,7 +40,7 @@ class EpisodeChooser: NSObject {
         let firstEpisode = Episode(group: self.group, key: url.relativePath)
         Util.log("trying to resume with", firstEpisode, f: [#file, #function])
 
-        Downloader.sharedDownloader().fetchListForGroup(group) { (error: Error?, list: [String]?) -> () in
+        Downloader.shared.fetchListForGroup(group) { (error: Error?, list: [String]?) -> () in
             if error == nil {
                 var episodeList = self.randomizeList(list!)
                 for (i, e) in episodeList.enumerated() {

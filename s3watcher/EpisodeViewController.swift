@@ -37,10 +37,12 @@ class EpisodeViewController: UIViewController, AVPlayerViewControllerDelegate, R
             alert.addAction(UIAlertAction(title: "Resume", style: .default, handler: {(action: UIAlertAction) -> Void in
                 let pausedUrl = UserDefaults.standard.url(forKey: pausedMovieUrlDefaultsKey)!
                 self.episodeChooser?.createEpisodeListStartingWith(url: pausedUrl)
+                self.showProgressVC()
             }))
             alert.addAction(UIAlertAction(title: "Ignore", style: .default, handler: {(action: UIAlertAction) -> Void in
                 self.clearPaused()
                 self.episodeChooser?.createEpisodeList()
+                self.showProgressVC()
             }))
             OperationQueue.main.addOperation({ () -> Void in
                 self.present(alert, animated: true, completion: nil)
@@ -48,6 +50,7 @@ class EpisodeViewController: UIViewController, AVPlayerViewControllerDelegate, R
         }
         else {
             self.episodeChooser?.createEpisodeList()
+            self.showProgressVC()
         }
     }
 
@@ -71,6 +74,14 @@ class EpisodeViewController: UIViewController, AVPlayerViewControllerDelegate, R
         UserDefaults.standard.set(nil, forKey: pausedMovieGroupDefaultsKey)
         UserDefaults.standard.set(nil, forKey: pausedMovieUrlDefaultsKey)
         UserDefaults.standard.set(nil, forKey: pausedMovieTimeDefaultsKey)
+    }
+
+    func showProgressVC() {
+        let storyboard = UIStoryboard(name: "Main", bundle: nil)
+        if let pvc = storyboard.instantiateViewController(withIdentifier: "DownloadProgressViewController") as? DownloadProgressViewController {
+            Downloader.shared.delegate = pvc
+            self.present(pvc, animated: true, completion: nil)
+        }
     }
 
     func episodeForItem(_ item: AVPlayerItem?) -> Episode {
@@ -125,6 +136,7 @@ class EpisodeViewController: UIViewController, AVPlayerViewControllerDelegate, R
 
     // MARK: - Episode Chooser Delegate
     func episodeListCreated(_ episodes: [Episode]) {
+        self.dismiss(animated: true, completion: nil)
         Util.log(episodes, f: [#file, #function])
         if episodes.count < 1 { return } // TODO: handle
 

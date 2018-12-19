@@ -93,6 +93,44 @@
             </objects>
             <point key="canvasLocation" x="245" y="1715"/>
         </scene>
+        <!--Download Progress View Controller-->
+        <scene sceneID="0Ww-A3-o5N">
+            <objects>
+                <viewController storyboardIdentifier="DownloadProgressViewController" id="Xk1-fE-YpN" customClass="DownloadProgressViewController" customModule="s3watcher" customModuleProvider="target" sceneMemberID="viewController">
+                    <layoutGuides>
+                        <viewControllerLayoutGuide type="top" id="4Cw-Hn-rk6"/>
+                        <viewControllerLayoutGuide type="bottom" id="bh3-SJ-o45"/>
+                    </layoutGuides>
+                    <view key="view" contentMode="scaleToFill" id="KfY-3a-9Qa">
+                        <rect key="frame" x="0.0" y="0.0" width="1920" height="1080"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <subviews>
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Downloading episodes" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="LG8-Bx-VUO">
+                                <rect key="frame" x="914" y="517" width="93" height="46"/>
+                                <fontDescription key="fontDescription" style="UICTFontTextStyleBody"/>
+                                <nil key="textColor"/>
+                                <nil key="highlightedColor"/>
+                            </label>
+                            <activityIndicatorView opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" animating="YES" style="whiteLarge" translatesAutoresizingMaskIntoConstraints="NO" id="AN1-o5-HWr">
+                                <rect key="frame" x="928" y="445" width="64" height="64"/>
+                            </activityIndicatorView>
+                        </subviews>
+                        <constraints>
+                            <constraint firstAttribute="trailing" secondItem="LG8-Bx-VUO" secondAttribute="trailing" id="1au-R8-CHd"/>
+                            <constraint firstItem="LG8-Bx-VUO" firstAttribute="centerY" secondItem="KfY-3a-9Qa" secondAttribute="centerY" id="FhA-Us-9gM"/>
+                            <constraint firstItem="AN1-o5-HWr" firstAttribute="centerX" secondItem="KfY-3a-9Qa" secondAttribute="centerX" id="bAJ-zb-aOJ"/>
+                            <constraint firstItem="AN1-o5-HWr" firstAttribute="bottom" secondItem="LG8-Bx-VUO" secondAttribute="top" constant="-10" id="euU-rq-Ehc"/>
+                            <constraint firstItem="LG8-Bx-VUO" firstAttribute="leading" secondItem="KfY-3a-9Qa" secondAttribute="leading" id="hV0-JD-u42"/>
+                        </constraints>
+                    </view>
+                    <connections>
+                        <outlet property="progressLabel" destination="LG8-Bx-VUO" id="o3q-NG-2yU"/>
+                    </connections>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="Cbh-lu-tTg" userLabel="First Responder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="245" y="3076"/>
+        </scene>
         <!--Rating View Controller-->
         <scene sceneID="XT6-I3-kLl">
             <objects>
