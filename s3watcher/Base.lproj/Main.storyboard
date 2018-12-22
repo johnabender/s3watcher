@@ -62,9 +62,6 @@
                                             </subviews>
                                             <color key="backgroundColor" white="0.33333333333333331" alpha="1" colorSpace="calibratedWhite"/>
                                         </tableViewCellContentView>
-                                        <connections>
-                                            <segue destination="fXG-BH-ua9" kind="show" id="zKF-Ix-1XI"/>
-                                        </connections>
                                     </tableViewCell>
                                 </prototypes>
                                 <connections>
@@ -88,7 +85,7 @@
         <!--AV Player View Controller-->
         <scene sceneID="xDX-yd-JWv">
             <objects>
-                <avPlayerViewController videoGravity="AVLayerVideoGravityResizeAspect" id="fXG-BH-ua9" customClass="EpisodeViewController" customModule="s3watcher" customModuleProvider="target" sceneMemberID="viewController"/>
+                <avPlayerViewController storyboardIdentifier="EpisodeViewController" videoGravity="AVLayerVideoGravityResizeAspect" id="fXG-BH-ua9" customClass="EpisodeViewController" customModule="s3watcher" customModuleProvider="target" sceneMemberID="viewController"/>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="0kI-CH-q3A" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
             <point key="canvasLocation" x="245" y="1715"/>
@@ -106,15 +103,17 @@
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
                             <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Downloading episodes" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="LG8-Bx-VUO">
-                                <rect key="frame" x="914" y="517" width="93" height="46"/>
+                                <rect key="frame" x="0.0" y="523" width="1920" height="35"/>
                                 <fontDescription key="fontDescription" style="UICTFontTextStyleBody"/>
-                                <nil key="textColor"/>
+                                <color key="textColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                 <nil key="highlightedColor"/>
                             </label>
                             <activityIndicatorView opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" animating="YES" style="whiteLarge" translatesAutoresizingMaskIntoConstraints="NO" id="AN1-o5-HWr">
-                                <rect key="frame" x="928" y="445" width="64" height="64"/>
+                                <rect key="frame" x="928" y="449" width="64" height="64"/>
+                                <color key="color" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                             </activityIndicatorView>
                         </subviews>
+                        <color key="backgroundColor" white="0.0" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                         <constraints>
                             <constraint firstAttribute="trailing" secondItem="LG8-Bx-VUO" secondAttribute="trailing" id="1au-R8-CHd"/>
                             <constraint firstItem="LG8-Bx-VUO" firstAttribute="centerY" secondItem="KfY-3a-9Qa" secondAttribute="centerY" id="FhA-Us-9gM"/>
@@ -130,6 +129,47 @@
                 <placeholder placeholderIdentifier="IBFirstResponder" id="Cbh-lu-tTg" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
             <point key="canvasLocation" x="245" y="3076"/>
+        </scene>
+        <!--Select Episode View Controller-->
+        <scene sceneID="a9B-VM-X6G">
+            <objects>
+                <tableViewController storyboardIdentifier="SelectEpisodeViewController" id="5K2-JF-zDm" customClass="SelectEpisodeViewController" customModule="s3watcher" customModuleProvider="target" sceneMemberID="viewController">
+                    <tableView key="view" clipsSubviews="YES" contentMode="scaleToFill" alwaysBounceVertical="YES" dataMode="prototypes" style="plain" separatorStyle="default" rowHeight="-1" sectionHeaderHeight="66" sectionFooterHeight="66" id="3HZ-Ve-Eyb">
+                        <rect key="frame" x="0.0" y="0.0" width="1920" height="1080"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <color key="backgroundColor" white="0.0" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                        <prototypes>
+                            <tableViewCell contentMode="scaleToFill" preservesSuperviewLayoutMargins="YES" selectionStyle="default" indentationWidth="10" reuseIdentifier="reuseIdentifier" textLabel="hKN-nQ-FVU" style="IBUITableViewCellStyleDefault" id="dam-fE-YjS">
+                                <rect key="frame" x="110" y="66" width="1700" height="66"/>
+                                <autoresizingMask key="autoresizingMask"/>
+                                <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" preservesSuperviewLayoutMargins="YES" insetsLayoutMarginsFromSafeArea="NO" tableViewCell="dam-fE-YjS" id="PLi-qv-Nxe">
+                                    <rect key="frame" x="0.0" y="0.0" width="1700" height="66"/>
+                                    <autoresizingMask key="autoresizingMask"/>
+                                    <subviews>
+                                        <label opaque="NO" multipleTouchEnabled="YES" contentMode="left" insetsLayoutMarginsFromSafeArea="NO" text="Title" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="hKN-nQ-FVU">
+                                            <rect key="frame" x="20" y="0.0" width="1660" height="66"/>
+                                            <autoresizingMask key="autoresizingMask"/>
+                                            <fontDescription key="fontDescription" type="system" pointSize="38"/>
+                                            <color key="textColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                            <nil key="highlightedColor"/>
+                                        </label>
+                                    </subviews>
+                                    <color key="backgroundColor" white="0.33000000000000002" alpha="1" colorSpace="calibratedWhite"/>
+                                </tableViewCellContentView>
+                                <connections>
+                                    <segue destination="fXG-BH-ua9" kind="show" id="AUn-1n-uEg"/>
+                                </connections>
+                            </tableViewCell>
+                        </prototypes>
+                        <connections>
+                            <outlet property="dataSource" destination="5K2-JF-zDm" id="bnq-WQ-8vX"/>
+                            <outlet property="delegate" destination="5K2-JF-zDm" id="Fma-hK-YUH"/>
+                        </connections>
+                    </tableView>
+                </tableViewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="4cZ-Lb-6Ms" userLabel="First Responder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="2345" y="275"/>
         </scene>
         <!--Rating View Controller-->
         <scene sceneID="XT6-I3-kLl">
@@ -147,7 +187,7 @@
                                 <rect key="frame" x="820" y="10" width="48" height="48"/>
                                 <inset key="contentEdgeInsets" minX="40" minY="20" maxX="40" maxY="20"/>
                                 <state key="normal" backgroundImage="RatingStarFilled"/>
-                                <state key="focused" backgroundImage="RatingStarFilledHighlight"/>
+                                <state key="focused" backgroundImage="RatingStarFilled"/>
                                 <connections>
                                     <action selector="ratingButtonPressed:" destination="baW-49-THY" eventType="primaryActionTriggered" id="fuf-6K-Gkw"/>
                                 </connections>
@@ -156,7 +196,7 @@
                                 <rect key="frame" x="878" y="10" width="48" height="48"/>
                                 <inset key="contentEdgeInsets" minX="40" minY="20" maxX="40" maxY="20"/>
                                 <state key="normal" backgroundImage="RatingStarFilled"/>
-                                <state key="focused" backgroundImage="RatingStarFilledHighlight"/>
+                                <state key="focused" backgroundImage="RatingStarFilled"/>
                                 <connections>
                                     <action selector="ratingButtonPressed:" destination="baW-49-THY" eventType="primaryActionTriggered" id="vD3-ga-Hwu"/>
                                 </connections>
@@ -169,7 +209,7 @@
                                 </constraints>
                                 <inset key="contentEdgeInsets" minX="40" minY="20" maxX="40" maxY="20"/>
                                 <state key="normal" backgroundImage="RatingStarFilled"/>
-                                <state key="focused" backgroundImage="RatingStarFilledHighlight"/>
+                                <state key="focused" backgroundImage="RatingStarFilled"/>
                                 <connections>
                                     <action selector="ratingButtonPressed:" destination="baW-49-THY" eventType="primaryActionTriggered" id="Avo-yl-qGu"/>
                                 </connections>
@@ -178,7 +218,7 @@
                                 <rect key="frame" x="994" y="10" width="48" height="48"/>
                                 <inset key="contentEdgeInsets" minX="40" minY="20" maxX="40" maxY="20"/>
                                 <state key="normal" backgroundImage="RatingStarFilled"/>
-                                <state key="focused" backgroundImage="RatingStarFilledHighlight"/>
+                                <state key="focused" backgroundImage="RatingStarFilled"/>
                                 <connections>
                                     <action selector="ratingButtonPressed:" destination="baW-49-THY" eventType="primaryActionTriggered" id="Whh-Fo-ZKR"/>
                                 </connections>
@@ -187,7 +227,7 @@
                                 <rect key="frame" x="1052" y="10" width="48" height="48"/>
                                 <inset key="contentEdgeInsets" minX="40" minY="20" maxX="40" maxY="20"/>
                                 <state key="normal" backgroundImage="RatingStarFilled"/>
-                                <state key="focused" backgroundImage="RatingStarFilledHighlight"/>
+                                <state key="focused" backgroundImage="RatingStarFilled"/>
                                 <connections>
                                     <action selector="ratingButtonPressed:" destination="baW-49-THY" eventType="primaryActionTriggered" id="uer-nR-5XI"/>
                                 </connections>
@@ -241,6 +281,5 @@
     </scenes>
     <resources>
         <image name="RatingStarFilled" width="256" height="256"/>
-        <image name="RatingStarFilledHighlight" width="256" height="256"/>
     </resources>
 </document>

@@ -39,6 +39,10 @@ class Episode : NSObject {
         return self.publicUrl.description
     }
 
+    var printableTitle: String {
+        return publicUrl.deletingPathExtension().lastPathComponent.replacingOccurrences(of: "_", with: " ")
+    }
+
     init(group: String, key: String) {
         self.group = group
         self.publicUrl = URL(string: key, relativeTo: baseUrl)!

@@ -24,13 +24,19 @@ class EpisodeChooser: NSObject {
         super.init()
     }
 
-    func createEpisodeList() {
+    func createEpisodeList(randomize: Bool = true) {
         Downloader.shared.fetchListForGroup(group) { (error: Error?, list: [String]?) -> () in
             if error == nil {
-                self.delegate?.episodeListCreated(self.randomizeList(list!))
+                if randomize {
+                    self.delegate?.episodeListCreated(self.randomizeList(list!))
+                }
+                else {
+                    let episodeList = list!.map { Episode(group: self.group, key: $0) }
+                    self.delegate?.episodeListCreated(episodeList)
+                }
             }
             else {
-                Util.log("list download error", error!, f: [#file, #function])
+                Util.log("list download error \(error!)")
                 self.delegate?.downloadError(error!)
             }
         }
@@ -38,7 +44,7 @@ class EpisodeChooser: NSObject {
 
     func createEpisodeListStartingWith(url: URL) {
         let firstEpisode = Episode(group: self.group, key: url.relativePath)
-        Util.log("trying to resume with", firstEpisode, f: [#file, #function])
+        Util.log("trying to resume with \(firstEpisode)")
 
         Downloader.shared.fetchListForGroup(group) { (error: Error?, list: [String]?) -> () in
             if error == nil {
@@ -52,7 +58,7 @@ class EpisodeChooser: NSObject {
                 self.delegate?.episodeListCreated(episodeList)
             }
             else {
-                Util.log("list download error", error!, f: [#file, #function])
+                Util.log("list download error \(error!)")
                 self.delegate?.downloadError(error!)
             }
         }
@@ -60,7 +66,7 @@ class EpisodeChooser: NSObject {
 
     private func randomizeList(_ list: [String]) -> [Episode] {
         let debugRandomization = false
-        if debugRandomization { Util.log("raw list:", list, f: [#file, #function]) }
+        if debugRandomization { Util.log("raw list: \(list)") }
 
         var candidates: [Episode] = []
         for key in list {
@@ -71,9 +77,9 @@ class EpisodeChooser: NSObject {
             for _ in 0..<max(1, Int(score.rounded())) {
                 candidates.append(episode)
             }
-            if debugRandomization { Util.log(key, "rating", episode.rating, "last played", episode.lastPlayed, "score", score, f: [#file, #function]) }
+            if debugRandomization { Util.log("\(key) rating \(episode.rating), last played \(episode.lastPlayed) score \(score)") }
         }
-        if debugRandomization { Util.log("weighted list:", candidates, f: [#file, #function]) }
+        if debugRandomization { Util.log("weighted list: \(candidates)") }
 
         var episodes: [Episode] = []
         while episodes.count < list.count {
@@ -85,8 +91,8 @@ class EpisodeChooser: NSObject {
                 }
             }
             if debugRandomization {
-                Util.log("randomized list:", episodes, f: [#file, #function])
-                Util.log("remaining list:", candidates, f: [#file, #function])
+                Util.log("randomized list: \(episodes)")
+                Util.log("remaining list: \(candidates)")
             }
         }
 

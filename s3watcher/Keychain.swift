@@ -10,54 +10,44 @@ import Foundation
 import Security
 
 // based on https://stackoverflow.com/a/37539998/1694526
-
-fileprivate let kSecClassValue = NSString(format: kSecClass)
-fileprivate let kSecAttrAccountValue = NSString(format: kSecAttrAccount)
-fileprivate let kSecValueDataValue = NSString(format: kSecValueData)
-fileprivate let kSecClassGenericPasswordValue = NSString(format: kSecClassGenericPassword)
-fileprivate let kSecAttrServiceValue = NSString(format: kSecAttrService)
-fileprivate let kSecMatchLimitValue = NSString(format: kSecMatchLimit)
-fileprivate let kSecReturnDataValue = NSString(format: kSecReturnData)
-fileprivate let kSecMatchLimitOneValue = NSString(format: kSecMatchLimitOne)
-
-fileprivate let serviceName = "org.bendersystems.S3WatcherKeychainService"
+private let serviceName = "org.bendersystems.S3WatcherKeychainService"
 
 public class Keychain: Any {
 
-    class func set(value: String, forKey key: String) {
+    class func set(string value: String, forKey key: String) {
         guard let dataFromString = value.data(using: String.Encoding.utf8, allowLossyConversion: false) else {
-            Util.log("keychain write failed to ceate data for string:", key, f: [#file, #function])
+            Util.log("keychain write failed to ceate data for string: \(key)")
             return
         }
 
         // delete old value, else set will fail
-        let deleteParameters: [NSString: Any] = [kSecClassValue: kSecClassGenericPasswordValue,
-                                                 kSecAttrServiceValue: serviceName,
-                                                 kSecAttrAccountValue: key,
-                                                 kSecReturnDataValue: kCFBooleanTrue]
+        let deleteParameters: [NSString: Any] = [kSecClass: kSecClassGenericPassword,
+                                                 kSecAttrService: serviceName,
+                                                 kSecAttrAccount: key,
+                                                 kSecReturnData: kCFBooleanTrue]
         let deleteStatus = SecItemDelete(deleteParameters as CFDictionary)
         if (deleteStatus != errSecSuccess), let err = SecCopyErrorMessageString(deleteStatus, nil) {
-            Util.log("failed deleting from keychain:", err, f: [#file, #function])
+            Util.log("failed deleting from keychain: \(err)")
         }
 
         // set new value
-        let setParameters: [NSString: Any] = [kSecClassValue: kSecClassGenericPasswordValue,
-                                           kSecAttrServiceValue: serviceName,
-                                           kSecAttrAccountValue: key,
-                                           kSecValueDataValue: dataFromString]
+        let setParameters: [NSString: Any] = [kSecClass: kSecClassGenericPassword,
+                                              kSecAttrService: serviceName,
+                                              kSecAttrAccount: key,
+                                              kSecValueData: dataFromString]
         let setStatus = SecItemAdd(setParameters as CFDictionary, nil)
 
         if setStatus != errSecSuccess, let err = SecCopyErrorMessageString(setStatus, nil) {
-            Util.log("failed writing to keychain:", err, f: [#file, #function])
+            Util.log("failed writing to keychain: \(err)")
         }
     }
 
-    class func loadValueForKey(_ key: String) -> String? {
-        let parameters: [NSString: Any] = [kSecClassValue: kSecClassGenericPasswordValue,
-                                           kSecAttrServiceValue: serviceName,
-                                           kSecAttrAccountValue: key,
-                                           kSecReturnDataValue: kCFBooleanTrue,
-                                           kSecMatchLimitValue: kSecMatchLimitOneValue]
+    class func loadStringForKey(_ key: String) -> String? {
+        let parameters: [NSString: Any] = [kSecClass: kSecClassGenericPassword,
+                                           kSecAttrService: serviceName,
+                                           kSecAttrAccount: key,
+                                           kSecReturnData: kCFBooleanTrue,
+                                           kSecMatchLimit: kSecMatchLimitOne]
         var valueRef: AnyObject?
         let status: OSStatus = SecItemCopyMatching(parameters as CFDictionary, &valueRef)
         if status == errSecSuccess {
@@ -66,7 +56,7 @@ public class Keychain: Any {
             }
         }
         else {
-            Util.log("failed reading from keychain:", status, f: [#file, #function])
+            Util.log("failed reading from keychain: \(status)")
         }
 
         return nil

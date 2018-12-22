@@ -8,7 +8,7 @@
 
 import UIKit
 
-class DownloadProgressViewController: UIViewController, DownloaderDelegate {
+class DownloadProgressViewController: UIViewController, DownloaderProgressDelegate {
 
     @IBOutlet weak var progressLabel: UILabel?
 
@@ -20,7 +20,7 @@ class DownloadProgressViewController: UIViewController, DownloaderDelegate {
 
     func downloadListProgress(listCount: Int) {
         OperationQueue.main.addOperation {
-            self.progressLabel?.text = "\(listCount) episodes"
+            self.progressLabel?.text = "Choosing from \(listCount) episodes..."
         }
     }
 }

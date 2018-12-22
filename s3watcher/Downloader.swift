@@ -8,38 +8,54 @@
 
 import Foundation
 
-fileprivate let keyIdKey = "S3AccessKeyId"
-fileprivate let secretKeyKey = "S3SecretKey"
-fileprivate let bucketNameKey = "S3BucketName"
+private let keyIdKey = "S3AccessKeyId"
+private let secretKeyKey = "S3SecretKey"
+private let bucketNameKey = "S3BucketName"
+private let bucketRegionKey = "S3BucketRegion"
 
-protocol DownloaderDelegate : class {
+protocol DownloaderProgressDelegate : class {
     func downloadListProgress(listCount: Int)
 }
 
 class Downloader: NSObject {
     static var shared = Downloader()
 
-    fileprivate var bucketName: String?
+    private var bucketName: String?
 
-    weak var delegate: DownloaderDelegate?
+    weak var progressDelegate: DownloaderProgressDelegate?
 
-    class func storedCredentials() -> (String?, String?, String?) {
-        return (Keychain.loadValueForKey(keyIdKey),
-                Keychain.loadValueForKey(secretKeyKey),
-                Keychain.loadValueForKey(bucketNameKey))
+    class func storedCredentials() -> (String?, String?, String?, String?) {
+        return (Keychain.loadStringForKey(keyIdKey),
+                Keychain.loadStringForKey(secretKeyKey),
+                Keychain.loadStringForKey(bucketNameKey),
+                Keychain.loadStringForKey(bucketRegionKey))
     }
 
-    class func setStoredCredentials(accessKeyId: String, secretAccessKey: String, bucketName: String) {
-        Keychain.set(value: accessKeyId, forKey: keyIdKey)
-        Keychain.set(value: secretAccessKey, forKey: secretKeyKey)
-        Keychain.set(value: bucketName, forKey: bucketNameKey)
+    class func setStoredCredentials(accessKeyId: String, secretAccessKey: String, bucketName: String, bucketRegion: String) {
+        Keychain.set(string: accessKeyId, forKey: keyIdKey)
+        Keychain.set(string: secretAccessKey, forKey: secretKeyKey)
+        Keychain.set(string: bucketName, forKey: bucketNameKey)
+        Keychain.set(string: bucketRegion, forKey: bucketRegionKey)
     }
 
-    func initialize(accessKeyId: String, secretAccessKey: String, bucketName: String) {
+    func initialize(accessKeyId: String, secretAccessKey: String, bucketName: String, bucketRegion: String) {
         self.bucketName = bucketName
 
+        var region = AWSRegionType.unknown
+        switch bucketRegion {
+        case "usw2": region = .usWest2
+        case "usw02": region = .usWest2
+        case "usw-2": region = .usWest2
+        case "uswest-2": region = .usWest2
+        case "uswest2": region = .usWest2
+        case "us-west-2": region = .usWest2
+        case "us west 2": region = .usWest2
+        default:
+            Util.log("no match for input region \(bucketRegion)")
+        }
+
         let credentials = AWSStaticCredentialsProvider(accessKey: accessKeyId, secretKey: secretAccessKey)
-        let config = AWSServiceConfiguration(region: .usWest2, credentialsProvider: credentials)
+        let config = AWSServiceConfiguration(region: region, credentialsProvider: credentials)
 
         AWSS3.register(with: config, forKey: "s3")
         AWSS3TransferManager.register(with: config, forKey: "downloadMgr")
@@ -91,7 +107,7 @@ class Downloader: NSObject {
                     completion?(task.error, nil)
                 }
                 else if task.exception != nil {
-                    Util.log("list exception... skipping", task.exception, f: [#file, #function])
+                    Util.log("list exception... skipping \(task.exception!)")
                 }
                 else if task.result != nil {
                     let contents : Array = (task.result as AnyObject).contents
@@ -103,12 +119,12 @@ class Downloader: NSObject {
                                 !s3obj.key.hasSuffix("-480p.m3u8")
                             {
                                 list.append(s3obj.key!)
-                                self.delegate?.downloadListProgress(listCount: list.count)
+                                self.progressDelegate?.downloadListProgress(listCount: list.count)
                             }
                         }
                     }
                     if (task.result as AnyObject).isTruncated == 1, let lastObj = contents.last as? AWSS3Object {
-                        Util.log("fetching another page starting with", lastObj.key, f: [#file, #function])
+//                        Util.log("fetching another page starting with", lastObj.key, f: [#file, #function])
                         self.fetchListForGroup(group, startingList: list, marker: lastObj.key, completion: completion)
                     }
                     else {
@@ -116,7 +132,7 @@ class Downloader: NSObject {
                     }
                 }
                 else {
-                    Util.log("no error, but no result... skipping", f: [#file, #function])
+                    Util.log("no error, but no result... skipping")
                 }
             }
             return nil

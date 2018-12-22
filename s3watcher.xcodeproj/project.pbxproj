@@ -10,6 +10,7 @@
 		37446C7B21921017003A29F1 /* RatingViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37446C7A21921017003A29F1 /* RatingViewController.swift */; };
 		376346F221C964FF0083336F /* Keychain.swift in Sources */ = {isa = PBXBuildFile; fileRef = 376346F121C964FF0083336F /* Keychain.swift */; };
 		37EA13FA21C997F200D4E8A8 /* DownloadProgressViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37EA13F921C997F200D4E8A8 /* DownloadProgressViewController.swift */; };
+		37EA13FC21CAED7600D4E8A8 /* SelectEpisodeViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37EA13FB21CAED7600D4E8A8 /* SelectEpisodeViewController.swift */; };
 		C308DA531EB75A5400F32E97 /* Util.swift in Sources */ = {isa = PBXBuildFile; fileRef = C308DA521EB75A5400F32E97 /* Util.swift */; };
 		C362A8891D0CCC0F00EAA9FF /* EpisodeChooser.swift in Sources */ = {isa = PBXBuildFile; fileRef = C362A8881D0CCC0F00EAA9FF /* EpisodeChooser.swift */; };
 		C362A88B1D0CCD0F00EAA9FF /* EpisodeViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C362A88A1D0CCD0F00EAA9FF /* EpisodeViewController.swift */; };
@@ -28,6 +29,7 @@
 		37446C7A21921017003A29F1 /* RatingViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RatingViewController.swift; sourceTree = "<group>"; };
 		376346F121C964FF0083336F /* Keychain.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Keychain.swift; sourceTree = "<group>"; };
 		37EA13F921C997F200D4E8A8 /* DownloadProgressViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DownloadProgressViewController.swift; sourceTree = "<group>"; };
+		37EA13FB21CAED7600D4E8A8 /* SelectEpisodeViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SelectEpisodeViewController.swift; sourceTree = "<group>"; };
 		C308DA521EB75A5400F32E97 /* Util.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Util.swift; sourceTree = "<group>"; };
 		C362A8881D0CCC0F00EAA9FF /* EpisodeChooser.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EpisodeChooser.swift; sourceTree = "<group>"; };
 		C362A88A1D0CCD0F00EAA9FF /* EpisodeViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EpisodeViewController.swift; sourceTree = "<group>"; };
@@ -88,6 +90,7 @@
 				C3705EB91BF7D9BE002CA20F /* ViewController.swift */,
 				C3CA8E091DFCCC4E0015AF4B /* Episode.swift */,
 				C362A8881D0CCC0F00EAA9FF /* EpisodeChooser.swift */,
+				37EA13FB21CAED7600D4E8A8 /* SelectEpisodeViewController.swift */,
 				C362A88A1D0CCD0F00EAA9FF /* EpisodeViewController.swift */,
 				37446C7A21921017003A29F1 /* RatingViewController.swift */,
 				C3705EE61BF7DC2A002CA20F /* Downloader.swift */,
@@ -199,6 +202,7 @@
 				C3CA8E0A1DFCCC4E0015AF4B /* Episode.swift in Sources */,
 				C3705EBA1BF7D9BE002CA20F /* ViewController.swift in Sources */,
 				C3705EB81BF7D9BE002CA20F /* AppDelegate.swift in Sources */,
+				37EA13FC21CAED7600D4E8A8 /* SelectEpisodeViewController.swift in Sources */,
 				376346F221C964FF0083336F /* Keychain.swift in Sources */,
 				C3705EE71BF7DC2A002CA20F /* Downloader.swift in Sources */,
 				37EA13FA21C997F200D4E8A8 /* DownloadProgressViewController.swift in Sources */,
@@ -342,9 +346,11 @@
 				);
 				INFOPLIST_FILE = s3watcher/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				OTHER_SWIFT_FLAGS = "";
 				PRODUCT_BUNDLE_IDENTIFIER = org.bendersystems.s3watcher;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE = "";
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
 				SWIFT_SWIFT3_OBJC_INFERENCE = Default;
 				SWIFT_VERSION = 4.2;
 				TVOS_DEPLOYMENT_TARGET = 12.0;
@@ -366,9 +372,11 @@
 				);
 				INFOPLIST_FILE = s3watcher/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				OTHER_SWIFT_FLAGS = "";
 				PRODUCT_BUNDLE_IDENTIFIER = org.bendersystems.s3watcher;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE = "";
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "";
 				SWIFT_SWIFT3_OBJC_INFERENCE = Default;
 				SWIFT_VERSION = 4.2;
 				TVOS_DEPLOYMENT_TARGET = 12.0;

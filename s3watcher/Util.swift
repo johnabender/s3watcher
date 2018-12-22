@@ -11,23 +11,10 @@ import Foundation
 class Util: Any {
     static let dateFormatter = DateFormatter()
 
-    class func log(_ args: Any..., f: [String] = []) {
+    class func log(_ string: String = "", file: String = #file, function: String = #function, line: Int = #line) {
+#if DEBUG
         dateFormatter.dateFormat = "HH:mm:ss.SSS"
-
-        var fileStr = ""
-        if f.count > 0 {
-            fileStr = f[0].components(separatedBy: "/").last ?? f[0]
-        }
-        var funcStr = ""
-        if f.count > 1 {
-            funcStr = f[1]
-        }
-
-        var desc = ""
-        for s in args {
-            desc += String(describing: s) + " "
-        }
-
-        print(dateFormatter.string(from: Date()), fileStr, funcStr, desc)
+        print("[\(dateFormatter.string(from: Date())) \((file as NSString).lastPathComponent):\(function):\(line)] \(string)")
+#endif
     }
 }

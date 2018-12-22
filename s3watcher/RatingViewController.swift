@@ -23,9 +23,9 @@ class RatingViewController: UIViewController {
     var episodeTitle = ""
 
     override var preferredFocusEnvironments: [UIFocusEnvironment] {
-        Util.log(f: [#file, #function]) // not called! :(
+        Util.log()
         if self.button1 != nil && self.button2 != nil && self.button3 != nil && self.button4 != nil && self.button5 != nil {
-            Util.log(f: [#file, #function])
+            Util.log()
             return [self.button1!, self.button2!, self.button3!, self.button4!, self.button5!]
         }
         return []

@@ -24,27 +24,26 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
             self.navigationController?.navigationBar.titleTextAttributes = convertToOptionalNSAttributedStringKeyDictionary(a)
         }
 
-        let (accessKeyId, secretAccessKey, bucketName) = Downloader.storedCredentials()
+        let (accessKeyId, secretAccessKey, bucketName, bucketRegion) = Downloader.storedCredentials()
         if accessKeyId != nil, accessKeyId!.count > 0,
             secretAccessKey != nil, secretAccessKey!.count > 0,
-            bucketName != nil, bucketName!.count > 0 {
-            self.initialize()
+            bucketName != nil, bucketName!.count > 0,
+            bucketRegion != nil, bucketRegion!.count > 0 {
+            self.initialize(accessKeyId: accessKeyId!, secretAccessKey: secretAccessKey!, bucketName: bucketName!, bucketRegion: bucketRegion!)
         }
         else {
-            self.promptForCredentials(accessKeyId: accessKeyId, secretAccessKey: secretAccessKey, bucketName: bucketName)
+            self.promptForCredentials(accessKeyId: accessKeyId, secretAccessKey: secretAccessKey, bucketName: bucketName, bucketRegion: bucketRegion)
         }
     }
 
-    func initialize() {
-        Util.log("initializing downloader", f: [#file, #function])
-        let (accessKeyId, secretAccessKey, bucketName) = Downloader.storedCredentials()
-        Downloader.shared.initialize(accessKeyId: accessKeyId!, secretAccessKey: secretAccessKey!, bucketName: bucketName!)
+    func initialize(accessKeyId: String, secretAccessKey: String, bucketName: String, bucketRegion: String) {
+        Downloader.shared.initialize(accessKeyId: accessKeyId, secretAccessKey: secretAccessKey, bucketName: bucketName, bucketRegion: bucketRegion)
         self.fetchGroupList()
     }
 
-    func promptForCredentials(accessKeyId: String?, secretAccessKey: String?, bucketName: String?) {
+    func promptForCredentials(accessKeyId: String?, secretAccessKey: String?, bucketName: String?, bucketRegion: String?) {
         let alert = UIAlertController(title: "Enter credentials",
-                                      message: "To watch videos, they must be hosted in Amazon S3 and you must have proper credentials to access them.\n\nPlease enter an access key ID, a secret access key, and an S3 bucket name.",
+                                      message: "To watch videos, they must be hosted in Amazon S3 and you must have proper credentials to access them.\n\nPlease enter an access key ID, a secret access key, an S3 bucket name, and the bucket's AWS region (e.g., \"us-east-1\" or \"use01\").",
                                       preferredStyle: .alert)
         alert.addTextField { (textField: UITextField) in
             textField.placeholder = "Access Key ID"
@@ -58,27 +57,33 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
             textField.placeholder = "Bucket Name"
             textField.text = bucketName
         }
+        alert.addTextField { (textField: UITextField) in
+            textField.placeholder = "Bucket Region"
+            textField.text = bucketRegion
+        }
         alert.addAction(UIAlertAction(title: "Go", style: .default, handler:{(action: UIAlertAction) -> Void in
             self.dismiss(animated: true, completion: nil)
 
-            var idEntry, keyEntry, bucketEntry: String?
+            var idEntry, keyEntry, bucketEntry, regionEntry: String?
             for i in 0..<alert.textFields!.count {
                 switch i {
                 case 0: idEntry = alert.textFields?[i].text
                 case 1: keyEntry = alert.textFields?[i].text
                 case 2: bucketEntry = alert.textFields?[i].text
+                case 3: regionEntry = alert.textFields?[i].text
                 default: break
                 }
             }
             if idEntry != nil, idEntry!.count > 0,
                 keyEntry != nil, keyEntry!.count > 0,
-                bucketEntry != nil, bucketEntry!.count > 0 {
-                Util.log("saving credentials", f: [#file, #function])
-                Downloader.setStoredCredentials(accessKeyId: idEntry!, secretAccessKey: keyEntry!, bucketName: bucketEntry!)
-                self.initialize()
+                bucketEntry != nil, bucketEntry!.count > 0,
+                regionEntry != nil, regionEntry!.count > 0 {
+                Util.log("saving credentials")
+                Downloader.setStoredCredentials(accessKeyId: idEntry!, secretAccessKey: keyEntry!, bucketName: bucketEntry!, bucketRegion: regionEntry!)
+                self.initialize(accessKeyId: idEntry!, secretAccessKey: keyEntry!, bucketName: bucketEntry!, bucketRegion: regionEntry!)
             }
             else {
-                self.promptForCredentials(accessKeyId: idEntry, secretAccessKey: keyEntry, bucketName: bucketEntry)
+                self.promptForCredentials(accessKeyId: idEntry, secretAccessKey: keyEntry, bucketName: bucketEntry, bucketRegion: bucketRegion)
             }
         }))
         OperationQueue.main.addOperation({ () -> Void in
@@ -92,15 +97,15 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
                 self.spinner?.stopAnimating()
             })
             if error != nil {
-                Util.log("error fetching group list", error!, f: [#file, #function])
+                Util.log("error fetching group list \(error!)")
                 let alert = UIAlertController(title: "Connection error",
                     message: error!.localizedDescription,
                     preferredStyle: .alert)
                 alert.addAction(UIAlertAction(title: "Retry", style: .default, handler:{(action: UIAlertAction) -> Void in
                     self.dismiss(animated: true, completion: nil)
                     self.spinner?.startAnimating()
-                    let (accessKeyId, secretAccessKey, bucketName) = Downloader.storedCredentials()
-                    self.promptForCredentials(accessKeyId: accessKeyId, secretAccessKey: secretAccessKey, bucketName: bucketName)
+                    let (accessKeyId, secretAccessKey, bucketName, bucketRegion) = Downloader.storedCredentials()
+                    self.promptForCredentials(accessKeyId: accessKeyId, secretAccessKey: secretAccessKey, bucketName: bucketName, bucketRegion: bucketRegion)
                 }))
                 OperationQueue.main.addOperation({ () -> Void in
                     self.present(alert, animated: true, completion: nil)
@@ -126,19 +131,36 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
 
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "GroupListCell", for: indexPath)
-        cell.textLabel!.text = self.groupList[(indexPath as NSIndexPath).row]
+        cell.textLabel?.text = String(self.groupList[(indexPath as NSIndexPath).row].dropLast())
         return cell
     }
 
-    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
-        if let episodeVC = segue.destination as? EpisodeViewController,
-            let cell = sender as? UITableViewCell {
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        let alert = UIAlertController(title: "Random episode?",
+                                      message: "Choose whether to play episodes at random, or select a single episode.",
+                                      preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "Random", style: .default, handler:{(action: UIAlertAction) -> Void in
+            self.dismiss(animated: true, completion: nil)
+            let storyboard = UIStoryboard(name: "Main", bundle: nil)
+            if let episodeVC = storyboard.instantiateViewController(withIdentifier: "EpisodeViewController") as? EpisodeViewController {
+                episodeVC.group = self.groupList[(indexPath as NSIndexPath).row]
+                self.present(episodeVC, animated: true, completion: nil)
+            }
+        }))
+        alert.addAction(UIAlertAction(title: "Select", style: .default, handler: { (action: UIAlertAction) in
+            self.dismiss(animated: true, completion: nil)
+            let storyboard = UIStoryboard(name: "Main", bundle: nil)
+            if let selectEpisodeVC = storyboard.instantiateViewController(withIdentifier: "SelectEpisodeViewController") as? SelectEpisodeViewController {
+                selectEpisodeVC.group = self.groupList[(indexPath as NSIndexPath).row]
+                self.present(selectEpisodeVC, animated: true, completion: nil)
+            }
+        }))
+        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel, handler: { (action: UIAlertAction) in
+            self.dismiss(animated: true, completion: nil)
+        }))
 
-            let indexPath = self.tableView!.indexPath(for: cell)! as IndexPath
-            episodeVC.group = self.groupList[(indexPath as NSIndexPath).row]
-
-            self.tableView?.deselectRow(at: indexPath, animated: true)
-        }
+        self.present(alert, animated: true, completion: nil)
+        self.tableView?.deselectRow(at: indexPath, animated: true)
     }
 }
 
