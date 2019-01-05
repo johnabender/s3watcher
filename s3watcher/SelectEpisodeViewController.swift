@@ -100,6 +100,8 @@ class SelectEpisodeViewController: UITableViewController, EpisodeChooserDelegate
         }
     }
 
+    func episodeListAppended(_ moreEpisodes: [Episode]) {}
+
     func downloadError(_ error: Error) {
         var msg = error.localizedDescription
         let nse = error as NSError

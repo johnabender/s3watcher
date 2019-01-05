@@ -91,7 +91,17 @@ class Downloader: NSObject {
         })
     }
 
-    func fetchListForGroup(_ group: String, startingList: [String] = [], marker: String = "", completion: ((Error?, [String]?)->())?) {
+    func fetchListForGroup(_ group: String, recursingList: [String] = [], recursingMarker: String = "", skipCache: Bool = false, completion: ((Error?, [String]?)->())?) {
+        if !skipCache,
+            let cachedList = self.cachedList(group: group) {
+            Util.log("using cached list for \(group)")
+            completion?(nil, cachedList)
+            // refresh cache
+            self.fetchListForGroup(group, skipCache: true, completion: nil)
+            return
+        }
+        Util.log("not using cache for \(group), fetching")
+
         guard let bucketName = self.bucketName else {
             completion?(NSError(domain: "S3DownloaderErrorDomain", code: 1, userInfo: nil), nil)
             return
@@ -100,7 +110,7 @@ class Downloader: NSObject {
         let listRequest = AWSS3ListObjectsRequest()
         listRequest?.bucket = bucketName
         listRequest?.prefix = group
-        listRequest?.marker = marker
+        listRequest?.marker = recursingMarker
         AWSS3.s3(forKey: "s3").listObjects(listRequest).continue(_: { (t: AWSTask?) -> Any? in
             if let task = t {
                 if task.error != nil {
@@ -111,7 +121,7 @@ class Downloader: NSObject {
                 }
                 else if task.result != nil {
                     let contents : Array = (task.result as AnyObject).contents
-                    var list = startingList
+                    var list = recursingList
                     for obj in contents {
                         if let s3obj = obj as? AWSS3Object {
                             if s3obj.size != 0,
@@ -124,11 +134,11 @@ class Downloader: NSObject {
                         }
                     }
                     if (task.result as AnyObject).isTruncated == 1, let lastObj = contents.last as? AWSS3Object {
-//                        Util.log("fetching another page starting with", lastObj.key, f: [#file, #function])
-                        self.fetchListForGroup(group, startingList: list, marker: lastObj.key, completion: completion)
+                        self.fetchListForGroup(group, recursingList: list, recursingMarker: lastObj.key, skipCache: true, completion: completion)
                     }
                     else {
                         completion?(nil, list)
+                        self.cacheList(group: group, keys: list)
                     }
                 }
                 else {
@@ -137,5 +147,58 @@ class Downloader: NSObject {
             }
             return nil
         })
+    }
+
+    private func cacheFileForGroup(_ group: String) -> URL {
+        let urls = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)
+        let cacheDir = urls.first!.appendingPathComponent("cache")
+        try? FileManager.default.createDirectory(at: cacheDir, withIntermediateDirectories: true, attributes: nil)
+        let cacheFile = cacheDir.appendingPathComponent(group).appendingPathExtension("plist")
+        return cacheFile
+    }
+
+    private func cacheList(group: String, keys: [String]) {
+        let cacheFile = self.cacheFileForGroup(group)
+        do {
+            try (keys as NSArray).write(to: cacheFile)
+            Util.log("cached keys to \(cacheFile)")
+        }
+        catch {
+            Util.log("failed writing to \(cacheFile): \(error)")
+        }
+    }
+
+    private func cachedList(group: String) -> [String]? {
+        let cacheFile = self.cacheFileForGroup(group)
+
+        let expireCache = false
+        if expireCache {
+            // check expiration of cache
+            do {
+                let cacheFileAttributes = try FileManager.default.attributesOfItem(atPath: cacheFile.path)
+                if let modifiedDate = cacheFileAttributes[.modificationDate] as? NSDate {
+                    if modifiedDate.timeIntervalSinceNow < -60*60*24*7 {
+                        Util.log("cache expired for \(group), last stored \(modifiedDate)")
+                        return nil
+                    }
+                    // else fall through and read from file
+                }
+                else {
+                    return nil
+                }
+            }
+            catch {
+                Util.log("failed reading file attributes for \(cacheFile): \(error)")
+                return nil
+            }
+        }
+
+        // read cached value
+        if let cachedArray = NSArray(contentsOf: cacheFile),
+            let keys = cachedArray as? [String] {
+            return keys
+        }
+
+        return nil
     }
 }

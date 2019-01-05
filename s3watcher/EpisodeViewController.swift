@@ -185,7 +185,9 @@ class EpisodeViewController: UIViewController, AVPlayerViewControllerDelegate, R
         if let qp = self.avPlayerVC?.player as? AVQueuePlayer {
             qp.advanceToNextItem()
             if self.avPlayerVC?.player?.currentItem != nil {
-                self.ratingVC?.currentRating = self.episodeForItem(self.avPlayerVC?.player?.currentItem)!.rating
+                let newEpisode = self.episodeForItem(self.avPlayerVC?.player?.currentItem)!
+                self.ratingVC?.currentRating = newEpisode.rating
+                self.ratingVC?.episodeTitle = newEpisode.printableTitle
             }
         }
     }
@@ -232,6 +234,25 @@ class EpisodeViewController: UIViewController, AVPlayerViewControllerDelegate, R
             }
             DispatchQueue.main.async {
                 self.avPlayerVC!.player!.play()
+            }
+        }
+    }
+
+    func episodeListAppended(_ moreEpisodes: [Episode]) {
+        if let player = self.avPlayerVC?.player as? AVQueuePlayer {
+            Util.log(moreEpisodes.description)
+            for episode in moreEpisodes {
+                let item = AVPlayerItem(url: episode.publicUrl)
+                // TODO: nextContentProposal for previous last item is this item
+                player.insert(item, after: nil)
+            }
+        }
+        else {
+            // not playing yet, can't append, wait and try again
+            // Note that if the EpisodeChooser calls this delegate function twice,
+            // the episodes may get out of order as the async calls queue up.
+            DispatchQueue.global().asyncAfter(deadline: .now() + 0.1) {
+                self.episodeListAppended(moreEpisodes)
             }
         }
     }

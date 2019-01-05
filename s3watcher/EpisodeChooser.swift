@@ -10,6 +10,7 @@ import Foundation
 
 protocol EpisodeChooserDelegate : class {
     func episodeListCreated(_ episodes: [Episode])
+    func episodeListAppended(_ moreEpisodes: [Episode])
     func downloadError(_ error: Error)
 }
 
@@ -45,17 +46,17 @@ class EpisodeChooser: NSObject {
     func createEpisodeListStartingWith(url: URL) {
         let firstEpisode = Episode(group: self.group, key: url.relativePath)
         Util.log("trying to resume with \(firstEpisode)")
+        self.delegate?.episodeListCreated([firstEpisode])
 
         Downloader.shared.fetchListForGroup(group) { (error: Error?, list: [String]?) -> () in
             if error == nil {
                 var episodeList = self.randomizeList(list!)
                 for (i, e) in episodeList.enumerated() {
-                    if e.publicUrl == firstEpisode.publicUrl {
+                    if e.publicUrl.absoluteURL == firstEpisode.publicUrl.absoluteURL {
                         episodeList.remove(at: i)
                     }
                 }
-                episodeList.insert(firstEpisode, at: 0)
-                self.delegate?.episodeListCreated(episodeList)
+                self.delegate?.episodeListAppended(episodeList)
             }
             else {
                 Util.log("list download error \(error!)")
@@ -86,7 +87,7 @@ class EpisodeChooser: NSObject {
             let match = candidates[Int(arc4random_uniform(UInt32(candidates.count)))]
             episodes.append(match)
             for i in (0..<candidates.count).reversed() {
-                if candidates[i].publicUrl == match.publicUrl {
+                if candidates[i].publicUrl.absoluteURL == match.publicUrl.absoluteURL {
                     candidates.remove(at: i)
                 }
             }

@@ -48,6 +48,10 @@ class RatingViewController: UIViewController {
         self.preferredContentSize = CGSize(width: 0, height: 120) // width is auto-set
 
         self.setDefaultImagesForRating()
+    }
+
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
 
         self.titleLabel?.text = self.episodeTitle
     }
