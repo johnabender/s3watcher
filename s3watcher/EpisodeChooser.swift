@@ -9,94 +9,294 @@
 import Foundation
 
 protocol EpisodeChooserDelegate : class {
-    func episodeListCreated(_ episodes: [Episode])
-    func episodeListAppended(_ moreEpisodes: [Episode])
+    func episodeListCreated()
+    func episodeListChanged()
     func downloadError(_ error: Error)
 }
 
 class EpisodeChooser: NSObject {
-    private var group: String
-    private var episodeList: [Episode]? = nil
+    let group: String
+    private let bucketName: String
+    private let bucketRegion: AWSRegionType
+
+    private(set) var list: EpisodeList
+    private var baseUrl: URL
+
+    private let isoDateFormatter: ISO8601DateFormatter
 
     weak var delegate: EpisodeChooserDelegate? = nil
+    private var hasNotifiedDelegateOfCreation = false
+    private var hasNotifiedDelegateOfFailure = false
+    private var finalFailureError: Error? = nil
+    private var failedDownloads = 0
 
-    init(group: String) {
+    init(group: String, bucketName: String, bucketRegion: AWSRegionType) {
         self.group = group
+        self.bucketName = bucketName
+        self.bucketRegion = bucketRegion
+
+        let regionString: String = {
+            switch bucketRegion {
+            case .usWest2: return "us-west-2"
+            default: return "unknown"
+            }
+        }()
+        self.baseUrl = URL(string: "https://s3-\(regionString).amazonaws.com/\(self.bucketName)/")!
+        self.list = EpisodeList(baseUrl: self.baseUrl)
+
+        self.isoDateFormatter = ISO8601DateFormatter()
+        self.isoDateFormatter.formatOptions = .withInternetDateTime
+
         super.init()
+
+        self.fillList()
+    }
+
+    func ratingForEpisodeWithName(_ name: String) -> Int {
+        return list.ratingForEpisodeWithName(name)
+    }
+    func setRatingForEpisodeWithName(_ name: String, rating: Int) {
+        list.setRatingForEpisodeWithName(name, rating: rating)
+        self.syncPreferences()
+    }
+
+    func lastPlayedDateForEpisodeWithName(_ name: String) -> Date {
+        return list.lastPlayedDateForEpisodeWithName(name)
+    }
+    func setLastPlayedDateForEpisodeWithName(_ name: String, date: Date) {
+        list.setLastPlayedDateForEpisodeWithName(name, date: date)
+        self.syncPreferences()
+    }
+
+    private func insertLocalValuesIntoList(_ episodeList: EpisodeList) -> Bool {
+        // override remotely cached values with locally stored ones, once
+        var anyLocal = false
+
+        synchronized(self) {
+            for k in episodeList.sortedEpisodeNames {
+                let episode = Episode(baseUrl: self.baseUrl, key: k)
+
+                let localRating = UserDefaults.standard.integer(forKey: episode.ratingKey)
+                if localRating != 0 {
+                    anyLocal = true
+                    episodeList.setRatingForEpisodeWithName(k, rating: localRating)
+    //                UserDefaults.standard.removeObject(forKey: episode.ratingKey)
+                }
+                let localLastPlayedStamp = UserDefaults.standard.double(forKey: episode.lastPlayedKey)
+                if localLastPlayedStamp != 0.0 {
+                    anyLocal = true
+                    let localLastPlayed = Date(timeIntervalSince1970: localLastPlayedStamp)
+                    episodeList.setLastPlayedDateForEpisodeWithName(k, date: localLastPlayed)
+    //                UserDefaults.standard.removeObject(forKey: episode.lastPlayedKey)
+                }
+            }
+        }
+
+        return anyLocal
+    }
+
+    private func mergeLists(authoritativeList: EpisodeList, listWithPrefs: EpisodeList) -> Bool {
+        Util.log()
+        // when finished, self.list should contain the merged results
+        for name in authoritativeList.sortedEpisodeNames {
+            authoritativeList.setRatingForEpisodeWithName(name, rating: listWithPrefs.ratingForEpisodeWithName(name))
+            authoritativeList.setLastPlayedDateForEpisodeWithName(name, date: listWithPrefs.lastPlayedDateForEpisodeWithName(name))
+        }
+        self.list = authoritativeList
+
+        // return true if the lists are different, meaning a play-queue update is required
+        return (authoritativeList.count != listWithPrefs.count) // should test for equality, not just count
+    }
+
+    private func fillList() {
+        EpisodeDatabase.shared.fetchPreferencesForGroup(group) { (error: Error?, prefs: [[String: Any]]?) -> () in
+            if error != nil {
+                Util.log("error fetching preferences")
+                synchronized(self) {
+                    self.failedDownloads += 1
+                    self.finalFailureError = error
+                }
+                _ = self.notifyDelegateOfDownloadError()
+                return
+            }
+            guard let episodePrefs = prefs else {
+                Util.log("no error, but no preferences??")
+                return
+            }
+            sleep(0)
+            Util.log("prefs returned")
+
+            var cacheDict: [String: [String: Any]] = [:]
+            for ep in episodePrefs {
+                if let key = ep["key"] as? String {
+                    cacheDict[key] = ep
+                }
+            }
+
+            let prefsEpisodeList = EpisodeList(baseUrl: self.baseUrl)
+            prefsEpisodeList.populateFromPrefs(cacheDict, dateFormatter: self.isoDateFormatter)
+
+            let anyLocal = self.insertLocalValuesIntoList(prefsEpisodeList)
+            var hasChanges = false
+
+            synchronized(self.list) {
+                if self.list.count == 0 {
+                    self.list = prefsEpisodeList
+                }
+                else {
+                    hasChanges = self.mergeLists(authoritativeList: self.list, listWithPrefs: prefsEpisodeList)
+                }
+            }
+
+            if anyLocal || hasChanges {
+                self.syncPreferences()
+            }
+            if hasChanges {
+                self.notifyDelegateOfListChanges()
+            }
+        }
+
+        Downloader.shared.fetchListForGroup(group) { (error: Error?, names: [String]?) -> () in
+            if error != nil {
+                Util.log("list download error \(error!)")
+                synchronized(self) {
+                    self.failedDownloads += 1
+                    self.finalFailureError = error
+                }
+                _ = self.notifyDelegateOfDownloadError()
+                return
+            }
+            guard let episodeNames = names else {
+                Util.log("no error but no downloaded items??")
+                return
+            }
+            sleep(0)
+            Util.log("download returned")
+
+            // create list from names
+            let downloadedEpisodeList = EpisodeList(baseUrl: self.baseUrl)
+            downloadedEpisodeList.populateFromNames(episodeNames)
+
+            let anyLocal = self.insertLocalValuesIntoList(downloadedEpisodeList)
+            var hasChanges = false
+
+            synchronized(self.list) {
+                if self.list.count == 0 {
+                    self.list = downloadedEpisodeList
+                }
+                else {
+                    hasChanges = self.mergeLists(authoritativeList: downloadedEpisodeList, listWithPrefs: self.list)
+                }
+            }
+
+            if anyLocal || hasChanges {
+                self.syncPreferences()
+            }
+            if hasChanges {
+                self.notifyDelegateOfListChanges()
+            }
+        }
+    }
+
+    private func notifyDelegateOfListChanges() {
+        synchronized(self) {
+            if self.hasNotifiedDelegateOfCreation {
+                self.delegate?.episodeListChanged()
+            }
+        }
+    }
+
+    private func notifyDelegateOfDownloadError() -> Bool {
+        var didNotify = false
+
+        synchronized(self) {
+            if self.failedDownloads > 1,
+                self.finalFailureError != nil,
+                self.delegate != nil,
+                !self.hasNotifiedDelegateOfFailure
+            {
+                self.delegate!.downloadError(self.finalFailureError!)
+                self.hasNotifiedDelegateOfFailure = true
+                didNotify = true
+            }
+        }
+
+        return didNotify
     }
 
     func createEpisodeList(randomize: Bool = true) {
-        Downloader.shared.fetchListForGroup(group) { (error: Error?, list: [String]?) -> () in
-            if error == nil {
-                if randomize {
-                    self.delegate?.episodeListCreated(self.randomizeList(list!))
+        if self.notifyDelegateOfDownloadError() {
+            return
+        }
+
+        // ensure cached preferences have arrived
+        var isWaiting = false
+        synchronized(self.list) {
+            if self.list.count == 0 {
+                DispatchQueue.global().asyncAfter(deadline: .now() + 0.5) {
+                    self.createEpisodeList(randomize: randomize)
                 }
-                else {
-                    let episodeList = list!.map { Episode(group: self.group, key: $0) }
-                    self.delegate?.episodeListCreated(episodeList)
-                }
+                isWaiting = true
             }
-            else {
-                Util.log("list download error \(error!)")
-                self.delegate?.downloadError(error!)
+        }
+        if isWaiting { return }
+
+        // randomize and notify delegate
+        synchronized(self.list) {
+            if randomize {
+                self.list.randomize()
+            }
+            synchronized(self) {
+                self.delegate?.episodeListCreated()
+                self.hasNotifiedDelegateOfCreation = true
             }
         }
     }
 
     func createEpisodeListStartingWith(url: URL) {
-        let firstEpisode = Episode(group: self.group, key: url.relativePath)
-        Util.log("trying to resume with \(firstEpisode)")
-        self.delegate?.episodeListCreated([firstEpisode])
+        Util.log("trying to resume with \(url.relativeString)")
+        if self.notifyDelegateOfDownloadError() {
+            return
+        }
 
-        Downloader.shared.fetchListForGroup(group) { (error: Error?, list: [String]?) -> () in
-            if error == nil {
-                var episodeList = self.randomizeList(list!)
-                for (i, e) in episodeList.enumerated() {
-                    if e.publicUrl.absoluteURL == firstEpisode.publicUrl.absoluteURL {
-                        episodeList.remove(at: i)
-                    }
+        // ensure cached preferences have arrived
+        var isWaiting = false
+        synchronized(self.list) {
+            if self.list.count == 0 {
+                DispatchQueue.global().asyncAfter(deadline: .now() + 0.5) {
+                    self.createEpisodeListStartingWith(url: url)
                 }
-                self.delegate?.episodeListAppended(episodeList)
+                isWaiting = true
             }
-            else {
-                Util.log("list download error \(error!)")
-                self.delegate?.downloadError(error!)
+        }
+        if isWaiting { return }
+
+        // reorder and notify delegate
+        synchronized(self.list) {
+            self.list.moveNameToFront(url.relativeString)
+            synchronized(self) {
+                self.delegate?.episodeListCreated()
+                self.hasNotifiedDelegateOfCreation = true
             }
         }
     }
 
-    private func randomizeList(_ list: [String]) -> [Episode] {
-        let debugRandomization = false
-        if debugRandomization { Util.log("raw list: \(list)") }
-
-        var candidates: [Episode] = []
-        for key in list {
-            let episode = Episode(group: self.group, key: key)
-            var score = Double(10*max(1, episode.rating))
-            let maxOldest = 60.0*60.0*24.0*365.0*2.0
-            score *= min(maxOldest, -episode.lastPlayed.timeIntervalSinceNow)/maxOldest
-            for _ in 0..<max(1, Int(score.rounded())) {
-                candidates.append(episode)
+    func syncPreferences() {
+        synchronized(self.list) {
+            let prefs: [[String: Any]] = self.list.map { (name, episode) in
+                return ["key": episode.publicUrl.relativeString,
+                        "rating": episode.rating,
+                        "lastPlayed": self.isoDateFormatter.string(from: episode.lastPlayed)]
             }
-            if debugRandomization { Util.log("\(key) rating \(episode.rating), last played \(episode.lastPlayed) score \(score)") }
+            Util.log("want to sync \(prefs)")
+            EpisodeDatabase.shared.setPreferencesForGroup(self.group, prefs: prefs)
         }
-        if debugRandomization { Util.log("weighted list: \(candidates)") }
-
-        var episodes: [Episode] = []
-        while episodes.count < list.count {
-            let match = candidates[Int(arc4random_uniform(UInt32(candidates.count)))]
-            episodes.append(match)
-            for i in (0..<candidates.count).reversed() {
-                if candidates[i].publicUrl.absoluteURL == match.publicUrl.absoluteURL {
-                    candidates.remove(at: i)
-                }
-            }
-            if debugRandomization {
-                Util.log("randomized list: \(episodes)")
-                Util.log("remaining list: \(candidates)")
-            }
-        }
-
-        return episodes
     }
+}
+
+
+fileprivate func synchronized(_ lock: Any, closure: () -> ()) {
+    objc_sync_enter(lock)
+    defer { objc_sync_exit(lock) }
+    closure()
 }

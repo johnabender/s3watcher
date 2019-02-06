@@ -14,15 +14,18 @@ private let pausedMovieUrlKey = "pausedMovieUrl"
 private let pausedMovieTimeKey = "pausedMovieTime"
 
 class EpisodeViewController: UIViewController, AVPlayerViewControllerDelegate, RatingDelegate, EpisodeChooserDelegate {
-    var group: String? = nil
-    var episode: Episode? = nil
+    private var episodeChooser: EpisodeChooser? = nil
+    private var preselectedEpisode = false
 
-    var episodeChooser: EpisodeChooser? = nil
-
-    var avPlayerVC: AVPlayerViewController? = nil
-    var ratingVC: RatingViewController? = nil
+    private var avPlayerVC: AVPlayerViewController? = nil
+    private var ratingVC: RatingViewController? = nil
 
     private var hasDisplayedProgressVC = false
+
+    func initialize(episodeChooser: EpisodeChooser, preselectedEpisode: Bool = false) {
+        self.episodeChooser = episodeChooser
+        self.preselectedEpisode = preselectedEpisode
+    }
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -31,18 +34,15 @@ class EpisodeViewController: UIViewController, AVPlayerViewControllerDelegate, R
     }
 
     func tryStartup() {
-        if group != nil {
-            if episode != nil {
-                Util.log("started with episode \(episode!)")
-                self.episodeListCreated([episode!])
-                return
+        if episodeChooser != nil {
+            self.episodeChooser!.delegate = self
+
+            if preselectedEpisode {
+                Util.log("started with pre-selected episode")
+                self.episodeListCreated()
             }
-            Util.log("no initial episode in group \(group!)")
-
-            self.episodeChooser = EpisodeChooser(group: group!)
-            self.episodeChooser?.delegate = self
-
-            if let (pausedUrl, _) = self.loadPaused() {
+            else if let (pausedUrl, _) = self.loadPaused() {
+                Util.log("found paused episode")
                 let alert = UIAlertController(title: "Paused video detected",
                                               message: "Resume paused video, or start a new video?",
                                               preferredStyle: .alert)
@@ -63,6 +63,7 @@ class EpisodeViewController: UIViewController, AVPlayerViewControllerDelegate, R
                 })
             }
             else {
+                Util.log("selecting random episode")
                 self.episodeChooser?.createEpisodeList()
                 self.showProgressVC()
             }
@@ -79,7 +80,7 @@ class EpisodeViewController: UIViewController, AVPlayerViewControllerDelegate, R
         self.avPlayerVC?.player?.pause()
         if let asset = self.avPlayerVC?.player?.currentItem?.asset as? AVURLAsset {
             self.setPaused(url: asset.url, time: CMTimeGetSeconds(self.avPlayerVC!.player!.currentTime()))
-            Util.log("paused video \(self.episodeForItem(self.avPlayerVC?.player?.currentItem)!)")
+            Util.log("paused video \(asset.url.absoluteString)!)")
         }
         super.viewWillDisappear(animated)
     }
@@ -89,9 +90,10 @@ class EpisodeViewController: UIViewController, AVPlayerViewControllerDelegate, R
         NotificationCenter.default.removeObserver(self)
     }
 
+    // TODO: move pause data into EpisodeChooser, maybe to Dynamo?
     func loadPaused() -> (URL, Float64)? {
         if let pausedData = UserDefaults.standard.dictionary(forKey: pausedMoviesDefaultsKey),
-            let groupData = pausedData[group!] as? [String: Any],
+            let groupData = pausedData[self.episodeChooser!.group] as? [String: Any],
             let urlString = groupData[pausedMovieUrlKey] as? String,
             let url = URL(string: urlString),
             let time = groupData[pausedMovieTimeKey] as? Float64 {
@@ -104,18 +106,18 @@ class EpisodeViewController: UIViewController, AVPlayerViewControllerDelegate, R
         let newData: [String: Any] = [pausedMovieUrlKey: url.absoluteString,
                                       pausedMovieTimeKey: time]
         if var pausedData = UserDefaults.standard.dictionary(forKey: pausedMoviesDefaultsKey) {
-            pausedData[group!] = newData
+            pausedData[self.episodeChooser!.group] = newData
             UserDefaults.standard.set(pausedData, forKey: pausedMoviesDefaultsKey)
         }
         else {
-            let pausedData = [group!: newData]
+            let pausedData = [self.episodeChooser!.group: newData]
             UserDefaults.standard.set(pausedData, forKey: pausedMoviesDefaultsKey)
         }
     }
 
     func clearPaused() {
         if var pausedData = UserDefaults.standard.dictionary(forKey: pausedMoviesDefaultsKey) {
-            pausedData.removeValue(forKey: group!)
+            pausedData.removeValue(forKey: self.episodeChooser!.group)
             UserDefaults.standard.set(pausedData, forKey: pausedMoviesDefaultsKey)
         }
     }
@@ -131,10 +133,12 @@ class EpisodeViewController: UIViewController, AVPlayerViewControllerDelegate, R
 
                 self.present(pvc, animated: false) {
                     // presenting could take longer than the download, so check if we can dismiss immediately
-                    self.hasDisplayedProgressVC = true
-                    if self.avPlayerVC != nil {
-                        self.dismiss(animated: false) {
-                            self.avPlayerVC!.player!.play()
+                    synchronized(self) {
+                        self.hasDisplayedProgressVC = true
+                        if self.avPlayerVC != nil {
+                            self.dismiss(animated: false) {
+                                self.avPlayerVC!.player!.play()
+                            }
                         }
                     }
                 }
@@ -142,11 +146,25 @@ class EpisodeViewController: UIViewController, AVPlayerViewControllerDelegate, R
         }
     }
 
-    func episodeForItem(_ item: AVPlayerItem?) -> Episode? {
-        if let asset = item?.asset as? AVURLAsset {
-            return Episode(group: group!, key: asset.url.relativeString)
+    func itemsFromEpisodeList() -> [AVPlayerItem] {
+        // create AVPlayer items from episodes
+        var items: [AVPlayerItem] = []
+
+        for (i, episodeName) in self.episodeChooser!.list.enumerated() {
+            let item = AVPlayerItem(url: self.episodeChooser!.list.publicUrlForEpisodeWithName(episodeName))
+            if i < self.episodeChooser!.list.count - 1 {
+                // TODO: nextContentProposal
+                //                let nextEpisode = episodes[i + 1]
+                //                let contentProposal = AVContentProposal(contentTimeForTransition: <#T##CMTime#>, title: <#T##String#>, previewImage: <#T##UIImage?#>)
+            }
+            items.append(item)
+
+            if self.preselectedEpisode {
+                break
+            }
         }
-        return nil
+
+        return items
     }
 
     func newPlayerWithItems(_ items: [AVPlayerItem]) -> (AVPlayerViewController?, RatingViewController?) {
@@ -155,12 +173,13 @@ class EpisodeViewController: UIViewController, AVPlayerViewControllerDelegate, R
 
         let storyboard = UIStoryboard(name: "Main", bundle: nil)
         if let rvc = storyboard.instantiateViewController(withIdentifier: "RatingViewController") as? RatingViewController {
-            let episode = self.episodeForItem(items[0])!
             rvc.delegate = self
-            if items.count > 0 {
-                rvc.currentRating = episode.rating
+            if items.count > 0,
+                let firstAsset = items[0].asset as? AVURLAsset,
+                self.episodeChooser != nil {
+                rvc.currentRating = self.episodeChooser!.ratingForEpisodeWithName(firstAsset.url.relativeString)
                 rvc.setDefaultImagesForRating()
-                rvc.episodeTitle = episode.printableTitle
+                rvc.episodeTitle = self.episodeChooser!.list.printableTitleForEpisodeWithName(firstAsset.url.relativeString)
             }
             vc.customInfoViewController = rvc
             ratingVC = rvc
@@ -181,13 +200,16 @@ class EpisodeViewController: UIViewController, AVPlayerViewControllerDelegate, R
 
     // MARK: - Player Delegate
     @objc func episodeFinished(_ note: Notification) {
-        self.episodeForItem(self.avPlayerVC?.player?.currentItem)!.lastPlayed = Date()
+        if let asset = self.avPlayerVC?.player?.currentItem?.asset as? AVURLAsset,
+            self.episodeChooser != nil {
+            self.episodeChooser!.setLastPlayedDateForEpisodeWithName(asset.url.relativeString, date: Date())
+        }
         if let qp = self.avPlayerVC?.player as? AVQueuePlayer {
             qp.advanceToNextItem()
-            if self.avPlayerVC?.player?.currentItem != nil {
-                let newEpisode = self.episodeForItem(self.avPlayerVC?.player?.currentItem)!
-                self.ratingVC?.currentRating = newEpisode.rating
-                self.ratingVC?.episodeTitle = newEpisode.printableTitle
+            if let asset = self.avPlayerVC?.player?.currentItem?.asset as? AVURLAsset,
+                self.episodeChooser != nil {
+                self.ratingVC?.currentRating = self.episodeChooser!.ratingForEpisodeWithName(asset.url.relativeString)
+                self.ratingVC?.episodeTitle = self.episodeChooser!.list.printableTitleForEpisodeWithName(asset.url.relativeString)
             }
         }
     }
@@ -197,40 +219,36 @@ class EpisodeViewController: UIViewController, AVPlayerViewControllerDelegate, R
     }
 
     // MARK: - Episode Chooser Delegate
-    func episodeListCreated(_ episodes: [Episode]) {
-        Util.log(episodes.description)
-        if episodes.count < 1 { return } // TODO: handle
+    func episodeListCreated() {
+        Util.log()
+        let items = self.itemsFromEpisodeList()
 
-        // create AVPlayer items from episodes
-        var items: [AVPlayerItem] = []
-        for (i, episode) in episodes.enumerated() {
-            let item = AVPlayerItem(url: episode.publicUrl)
-            if i < episodes.count - 1 {
-                // TODO: nextContentProposal
-//                let nextEpisode = episodes[i + 1]
-//                let contentProposal = AVContentProposal(contentTimeForTransition: <#T##CMTime#>, title: <#T##String#>, previewImage: <#T##UIImage?#>)
-            }
-            items.append(item)
+        if items.count < 1 {
+            Util.log("created an episode list with no episodes, giving up")
+            return
         }
 
         var pausedTime = 0.0
-        if self.episode == nil,
+        if !self.preselectedEpisode,
             let (_, pt) = self.loadPaused() {
+
             pausedTime = pt
             self.clearPaused()
         }
 
         NotificationCenter.default.addObserver(self, selector: #selector(EpisodeViewController.episodeFinished(_:)), name: NSNotification.Name.AVPlayerItemDidPlayToEndTime, object: nil)
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { // delay to give progress VC time to clear
-            (self.avPlayerVC, self.ratingVC) = self.newPlayerWithItems(items)
-            if self.hasDisplayedProgressVC {
-                self.dismiss(animated: true, completion: nil)
-            }
+            synchronized(self) {
+                (self.avPlayerVC, self.ratingVC) = self.newPlayerWithItems(items)
+                if self.hasDisplayedProgressVC {
+                    self.dismiss(animated: true, completion: nil)
+                }
 
-            if pausedTime > 0.0 {
-                let time = CMTimeMakeWithSeconds(Float64(pausedTime), preferredTimescale: 60)
-                self.avPlayerVC!.player!.seek(to: time)
-                Util.log("seek to \(time)")
+                if pausedTime > 0.0 {
+                    let time = CMTimeMakeWithSeconds(Float64(pausedTime), preferredTimescale: 60)
+                    self.avPlayerVC!.player!.seek(to: time)
+                    Util.log("seek to \(time)")
+                }
             }
             DispatchQueue.main.async {
                 self.avPlayerVC!.player!.play()
@@ -238,24 +256,69 @@ class EpisodeViewController: UIViewController, AVPlayerViewControllerDelegate, R
         }
     }
 
-    func episodeListAppended(_ moreEpisodes: [Episode]) {
+    func episodeListChanged() {
+        Util.log()
+        if self.avPlayerVC == nil {
+            DispatchQueue.global().asyncAfter(deadline: .now() + 0.5) {
+                self.episodeListChanged()
+            }
+            return
+        }
+        synchronized(self) {
+            guard let player = self.avPlayerVC?.player as? AVQueuePlayer else { return }
+
+            let desiredItems = self.itemsFromEpisodeList()
+            var desiredIndex = -1
+
+            // TODO: check math
+            // TODO: alter dynamo into conflict with S3 and test logic
+            for (i, existingItem) in player.items().enumerated() {
+                guard let existingAsset = existingItem.asset as? AVURLAsset else { return }
+                if i == 0 {
+                    // find starting index in desiredItems
+                    for (j, desiredItem) in desiredItems.enumerated() {
+                        guard let desiredAsset = desiredItem.asset as? AVURLAsset else { continue }
+                        if existingAsset.url.absoluteString == desiredAsset.url.absoluteString {
+                            desiredIndex = j
+                            break
+                        }
+                    }
+                    if desiredIndex < 0 {
+                        Util.log("currently playing item doesn't exist in desired items, giving up")
+                        return
+                    }
+                }
+                else if desiredIndex + i >= desiredItems.count {
+                    player.remove(existingItem)
+                }
+                else {
+                    let desiredItem = desiredItems[desiredIndex + i]
+                    guard let desiredAsset = desiredItem.asset as? AVURLAsset else { continue }
+                    if existingAsset.url.absoluteString != desiredAsset.url.absoluteString {
+                        player.remove(existingItem)
+                    }
+                }
+            }
+        }
+    }
+
+    /*
+    func episodeListAppended() {
         if let player = self.avPlayerVC?.player as? AVQueuePlayer {
-            Util.log(moreEpisodes.description)
-            for episode in moreEpisodes {
-                let item = AVPlayerItem(url: episode.publicUrl)
+            for episodeName in self.episodeChooser!.sortedEpisodeNames[1...] {
+                let item = AVPlayerItem(url: self.episodeChooser!.publicUrlForEpisodeWithName(episodeName))
                 // TODO: nextContentProposal for previous last item is this item
                 player.insert(item, after: nil)
             }
         }
         else {
             // not playing yet, can't append, wait and try again
-            // Note that if the EpisodeChooser calls this delegate function twice,
-            // the episodes may get out of order as the async calls queue up.
             DispatchQueue.global().asyncAfter(deadline: .now() + 0.1) {
-                self.episodeListAppended(moreEpisodes)
+                self.episodeListAppended()
             }
         }
     }
+ */
 
     func downloadError(_ error: Error) {
         var msg = error.localizedDescription
@@ -280,6 +343,16 @@ class EpisodeViewController: UIViewController, AVPlayerViewControllerDelegate, R
     // MARK: - Rating Delegate
     func ratingSelected(_ rating: Int) {
         Util.log("\(rating)")
-        self.episodeForItem(self.avPlayerVC?.player?.currentItem)!.rating = rating
+        if let asset = self.avPlayerVC?.player?.currentItem?.asset as? AVURLAsset,
+            self.episodeChooser != nil {
+            self.episodeChooser!.setRatingForEpisodeWithName(asset.url.relativeString, rating: rating)
+        }
     }
+}
+
+
+fileprivate func synchronized(_ lock: Any, closure: () -> ()) {
+    objc_sync_enter(lock)
+    defer { objc_sync_exit(lock) }
+    closure()
 }

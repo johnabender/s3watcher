@@ -14,7 +14,7 @@ class Util: Any {
     class func log(_ string: String = "", file: String = #file, function: String = #function, line: Int = #line) {
 #if DEBUG
         dateFormatter.dateFormat = "HH:mm:ss.SSS"
-        print("[\(dateFormatter.string(from: Date())) \((file as NSString).lastPathComponent):\(function):\(line)] \(string)")
+        print("[\(dateFormatter.string(from: Date())) \((file as NSString).lastPathComponent):\(line):\(function)] \(string)")
 #endif
     }
 }

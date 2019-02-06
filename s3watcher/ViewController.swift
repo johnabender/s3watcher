@@ -13,6 +13,8 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
     @IBOutlet weak var tableView: UITableView?
     @IBOutlet weak var spinner: UIActivityIndicatorView?
 
+    var bucketName: String = ""
+    var bucketRegion: AWSRegionType = .unknown
     var groupList: [String] = []
 
     override func viewDidLoad() {
@@ -38,6 +40,9 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
 
     func initialize(accessKeyId: String, secretAccessKey: String, bucketName: String, bucketRegion: String) {
         Downloader.shared.initialize(accessKeyId: accessKeyId, secretAccessKey: secretAccessKey, bucketName: bucketName, bucketRegion: bucketRegion)
+        EpisodeDatabase.shared.initialize(accessKeyId: accessKeyId, secretAccessKey: secretAccessKey, bucketName: bucketName, bucketRegion: bucketRegion)
+        self.bucketName = bucketName
+        self.bucketRegion = Downloader.awsRegionFromRegionString(bucketRegion)
         self.fetchGroupList()
     }
 
@@ -136,6 +141,18 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
     }
 
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        let episodeChooser = EpisodeChooser(group: self.groupList[(indexPath as NSIndexPath).row],
+                                            bucketName: self.bucketName,
+                                            bucketRegion: self.bucketRegion)
+        if false {
+            let storyboard = UIStoryboard(name: "Main", bundle: nil)
+            if let episodeVC = storyboard.instantiateViewController(withIdentifier: "EpisodeViewController") as? EpisodeViewController {
+                episodeVC.initialize(episodeChooser: episodeChooser)
+                self.present(episodeVC, animated: true, completion: nil)
+            }
+            return
+        }
+        
         let alert = UIAlertController(title: "Random episode?",
                                       message: "Choose whether to play episodes at random, or select a single episode.",
                                       preferredStyle: .alert)
@@ -143,7 +160,7 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
             self.dismiss(animated: true, completion: nil)
             let storyboard = UIStoryboard(name: "Main", bundle: nil)
             if let episodeVC = storyboard.instantiateViewController(withIdentifier: "EpisodeViewController") as? EpisodeViewController {
-                episodeVC.group = self.groupList[(indexPath as NSIndexPath).row]
+                episodeVC.initialize(episodeChooser: episodeChooser)
                 self.present(episodeVC, animated: true, completion: nil)
             }
         }))
@@ -151,7 +168,7 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
             self.dismiss(animated: true, completion: nil)
             let storyboard = UIStoryboard(name: "Main", bundle: nil)
             if let selectEpisodeVC = storyboard.instantiateViewController(withIdentifier: "SelectEpisodeViewController") as? SelectEpisodeViewController {
-                selectEpisodeVC.group = self.groupList[(indexPath as NSIndexPath).row]
+                selectEpisodeVC.initialize(episodeChooser: episodeChooser)
                 self.present(selectEpisodeVC, animated: true, completion: nil)
             }
         }))

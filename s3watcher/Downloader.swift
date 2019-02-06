@@ -38,22 +38,25 @@ class Downloader: NSObject {
         Keychain.set(string: bucketRegion, forKey: bucketRegionKey)
     }
 
+    class func awsRegionFromRegionString(_ regionString: String) -> AWSRegionType {
+        switch regionString {
+        case "usw2": return .usWest2
+        case "usw02": return .usWest2
+        case "usw-2": return .usWest2
+        case "uswest-2": return .usWest2
+        case "uswest2": return .usWest2
+        case "us-west-2": return .usWest2
+        case "us west 2": return .usWest2
+        default:
+            Util.log("no match for input region \(regionString)")
+            return .unknown
+        }
+    }
+
     func initialize(accessKeyId: String, secretAccessKey: String, bucketName: String, bucketRegion: String) {
         self.bucketName = bucketName
 
-        var region = AWSRegionType.unknown
-        switch bucketRegion {
-        case "usw2": region = .usWest2
-        case "usw02": region = .usWest2
-        case "usw-2": region = .usWest2
-        case "uswest-2": region = .usWest2
-        case "uswest2": region = .usWest2
-        case "us-west-2": region = .usWest2
-        case "us west 2": region = .usWest2
-        default:
-            Util.log("no match for input region \(bucketRegion)")
-        }
-
+        let region = Downloader.awsRegionFromRegionString(bucketRegion)
         let credentials = AWSStaticCredentialsProvider(accessKey: accessKeyId, secretKey: secretAccessKey)
         let config = AWSServiceConfiguration(region: region, credentialsProvider: credentials)
 
@@ -91,17 +94,7 @@ class Downloader: NSObject {
         })
     }
 
-    func fetchListForGroup(_ group: String, recursingList: [String] = [], recursingMarker: String = "", skipCache: Bool = false, completion: ((Error?, [String]?)->())?) {
-        if !skipCache,
-            let cachedList = self.cachedList(group: group) {
-            Util.log("using cached list for \(group)")
-            completion?(nil, cachedList)
-            // refresh cache
-            self.fetchListForGroup(group, skipCache: true, completion: nil)
-            return
-        }
-        Util.log("not using cache for \(group), fetching")
-
+    func fetchListForGroup(_ group: String, recursingList: [String] = [], recursingMarker: String = "", completion: ((Error?, [String]?)->())?) {
         guard let bucketName = self.bucketName else {
             completion?(NSError(domain: "S3DownloaderErrorDomain", code: 1, userInfo: nil), nil)
             return
@@ -112,43 +105,45 @@ class Downloader: NSObject {
         listRequest?.prefix = group
         listRequest?.marker = recursingMarker
         AWSS3.s3(forKey: "s3").listObjects(listRequest).continue(_: { (t: AWSTask?) -> Any? in
-            if let task = t {
-                if task.error != nil {
-                    completion?(task.error, nil)
-                }
-                else if task.exception != nil {
-                    Util.log("list exception... skipping \(task.exception!)")
-                }
-                else if task.result != nil {
-                    let contents : Array = (task.result as AnyObject).contents
-                    var list = recursingList
-                    for obj in contents {
-                        if let s3obj = obj as? AWSS3Object {
-                            if s3obj.size != 0,
-                                s3obj.key.hasSuffix(".m3u8"),
-                                !s3obj.key.hasSuffix("-480p.m3u8")
-                            {
-                                list.append(s3obj.key!)
-                                self.progressDelegate?.downloadListProgress(listCount: list.count)
-                            }
+            guard let task = t else { return nil }
+
+            if task.error != nil {
+                completion?(task.error, nil)
+            }
+            else if task.exception != nil {
+                Util.log("list exception... skipping \(task.exception!)")
+            }
+            else if task.result != nil {
+                let contents : Array = (task.result as AnyObject).contents
+                var list = recursingList
+                for obj in contents {
+                    if let s3obj = obj as? AWSS3Object {
+                        if s3obj.size != 0,
+                            s3obj.key.hasSuffix(".m3u8"),
+                            !s3obj.key.hasSuffix("-480p.m3u8")
+                        {
+                            list.append(s3obj.key!)
+                            self.progressDelegate?.downloadListProgress(listCount: list.count)
                         }
                     }
-                    if (task.result as AnyObject).isTruncated == 1, let lastObj = contents.last as? AWSS3Object {
-                        self.fetchListForGroup(group, recursingList: list, recursingMarker: lastObj.key, skipCache: true, completion: completion)
-                    }
-                    else {
-                        completion?(nil, list)
-                        self.cacheList(group: group, keys: list)
-                    }
+                }
+                if (task.result as AnyObject).isTruncated == 1, let lastObj = contents.last as? AWSS3Object {
+                    self.fetchListForGroup(group, recursingList: list, recursingMarker: lastObj.key, completion: completion)
                 }
                 else {
-                    Util.log("no error, but no result... skipping")
+                    completion?(nil, list)
+//                    self.cacheList(group: group, keys: list)
                 }
             }
+            else {
+                Util.log("no error, but no result... skipping")
+            }
+
             return nil
         })
     }
 
+    /*
     private func cacheFileForGroup(_ group: String) -> URL {
         let urls = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)
         let cacheDir = urls.first!.appendingPathComponent("cache")
@@ -201,4 +196,5 @@ class Downloader: NSObject {
 
         return nil
     }
+ */
 }

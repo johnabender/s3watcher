@@ -11,5 +11,6 @@
 
 #import <AWSCore/AWSCore.h>
 #import <AWSS3/AWSS3.h>
+#import <AWSDynamoDB/AWSDynamoDB.h>
 
 #endif /* s3watcher_Bridging_Header_h */

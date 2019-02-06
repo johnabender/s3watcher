@@ -9,30 +9,30 @@
 import UIKit
 
 class SelectEpisodeViewController: UITableViewController, EpisodeChooserDelegate {
-    var group: String? = nil
-
     private var episodeChooser: EpisodeChooser? = nil
-    private var episodes: [Episode] = []
 
     private var hasDisplayedProgressVC = false
+
+    func initialize(episodeChooser: EpisodeChooser) {
+        self.episodeChooser = episodeChooser
+    }
 
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        self.loadListForGroup()
+        self.loadEpisodeList()
     }
 
-    func loadListForGroup() {
-        if self.group != nil {
-            self.episodeChooser = EpisodeChooser(group: group!)
-            self.episodeChooser?.delegate = self
-            self.episodeChooser?.createEpisodeList(randomize: false)
+    func loadEpisodeList() {
+        if episodeChooser != nil {
+            self.episodeChooser!.delegate = self
+            self.episodeChooser!.createEpisodeList(randomize: false)
             self.showProgressVC()
         }
         else {
             // wait and try again
             DispatchQueue.global().asyncAfter(deadline: .now() + 0.1) {
-                self.loadListForGroup()
+                self.loadEpisodeList()
             }
         }
     }
@@ -41,12 +41,12 @@ class SelectEpisodeViewController: UITableViewController, EpisodeChooserDelegate
         let storyboard = UIStoryboard(name: "Main", bundle: nil)
         if let pvc = storyboard.instantiateViewController(withIdentifier: "DownloadProgressViewController") as? DownloadProgressViewController {
             Downloader.shared.progressDelegate = pvc
-            if self.episodes.count > 0 { return }
+            if !self.episodeChooser!.list.isEmpty { return }
             OperationQueue.main.addOperation {
                 self.present(pvc, animated: false) {
                     // presenting could take longer than the download, so check if we can dismiss immediately
                     self.hasDisplayedProgressVC = true
-                    if self.episodes.count > 0 {
+                    if !self.episodeChooser!.list.isEmpty {
                         self.dismiss(animated: false, completion: nil)
                     }
                 }
@@ -59,39 +59,40 @@ class SelectEpisodeViewController: UITableViewController, EpisodeChooserDelegate
     }
 
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return self.episodes.count
+        return self.episodeChooser!.list.count
     }
 
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "reuseIdentifier", for: indexPath)
-        cell.textLabel?.text = self.episodes[(indexPath as NSIndexPath).row].printableTitle
+        let episodeName = self.episodeChooser!.list.nameForEpisodeAtIndex((indexPath as NSIndexPath).row)
+        cell.textLabel?.text = self.episodeChooser!.list.printableTitleForEpisodeWithName(episodeName)
         return cell
     }
 
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        let episode = self.episodes[(indexPath as NSIndexPath).row]
+        let episodeName = self.episodeChooser!.list.nameForEpisodeAtIndex((indexPath as NSIndexPath).row)
+        self.episodeChooser!.list.moveNameToFront(episodeName)
+
         let storyboard = UIStoryboard(name: "Main", bundle: nil)
         if let episodeVC = storyboard.instantiateViewController(withIdentifier: "EpisodeViewController") as? EpisodeViewController {
             if true {
                 let parent = self.presentingViewController!
                 parent.dismiss(animated: false) {
                     parent.present(episodeVC, animated: false) {
-                        episodeVC.group = self.group
-                        episodeVC.episode = episode
+                        episodeVC.initialize(episodeChooser: self.episodeChooser!,
+                                             preselectedEpisode: true)
                     }
                 }
             } else {
                 // this is better behavior, but AVPlayerViewController is unhappy in this scenario
-                episodeVC.group = self.group
-                episodeVC.episode = episode
+                episodeVC.initialize(episodeChooser: self.episodeChooser!)
                 self.present(episodeVC, animated: true, completion: nil)
             }
         }
         self.tableView.deselectRow(at: indexPath, animated: true)
     }
 
-    func episodeListCreated(_ episodes: [Episode]) {
-        self.episodes = episodes
+    func episodeListCreated() {
         OperationQueue.main.addOperation {
             if self.hasDisplayedProgressVC {
                 self.dismiss(animated: true, completion: nil)
@@ -100,7 +101,11 @@ class SelectEpisodeViewController: UITableViewController, EpisodeChooserDelegate
         }
     }
 
-    func episodeListAppended(_ moreEpisodes: [Episode]) {}
+    func episodeListChanged() {
+        OperationQueue.main.addOperation {
+            self.tableView.reloadData()
+        }
+    }
 
     func downloadError(_ error: Error) {
         var msg = error.localizedDescription
