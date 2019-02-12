@@ -68,33 +68,6 @@ class EpisodeChooser: NSObject {
         self.syncPreferences()
     }
 
-    private func insertLocalValuesIntoList(_ episodeList: EpisodeList) -> Bool {
-        // override remotely cached values with locally stored ones, once
-        var anyLocal = false
-
-        synchronized(self) {
-            for k in episodeList.sortedEpisodeNames {
-                let episode = Episode(baseUrl: self.baseUrl, key: k)
-
-                let localRating = UserDefaults.standard.integer(forKey: episode.ratingKey)
-                if localRating != 0 {
-                    anyLocal = true
-                    episodeList.setRatingForEpisodeWithName(k, rating: localRating)
-    //                UserDefaults.standard.removeObject(forKey: episode.ratingKey)
-                }
-                let localLastPlayedStamp = UserDefaults.standard.double(forKey: episode.lastPlayedKey)
-                if localLastPlayedStamp != 0.0 {
-                    anyLocal = true
-                    let localLastPlayed = Date(timeIntervalSince1970: localLastPlayedStamp)
-                    episodeList.setLastPlayedDateForEpisodeWithName(k, date: localLastPlayed)
-    //                UserDefaults.standard.removeObject(forKey: episode.lastPlayedKey)
-                }
-            }
-        }
-
-        return anyLocal
-    }
-
     private func mergeLists(authoritativeList: EpisodeList, listWithPrefs: EpisodeList) -> Bool {
         Util.log()
         // when finished, self.list should contain the merged results
@@ -136,7 +109,6 @@ class EpisodeChooser: NSObject {
             let prefsEpisodeList = EpisodeList(baseUrl: self.baseUrl)
             prefsEpisodeList.populateFromPrefs(cacheDict, dateFormatter: self.isoDateFormatter)
 
-            let anyLocal = self.insertLocalValuesIntoList(prefsEpisodeList)
             var hasChanges = false
 
             synchronized(self.list) {
@@ -148,10 +120,8 @@ class EpisodeChooser: NSObject {
                 }
             }
 
-            if anyLocal || hasChanges {
-                self.syncPreferences()
-            }
             if hasChanges {
+                self.syncPreferences()
                 self.notifyDelegateOfListChanges()
             }
         }
@@ -177,7 +147,6 @@ class EpisodeChooser: NSObject {
             let downloadedEpisodeList = EpisodeList(baseUrl: self.baseUrl)
             downloadedEpisodeList.populateFromNames(episodeNames)
 
-            let anyLocal = self.insertLocalValuesIntoList(downloadedEpisodeList)
             var hasChanges = false
 
             synchronized(self.list) {
@@ -189,10 +158,8 @@ class EpisodeChooser: NSObject {
                 }
             }
 
-            if anyLocal || hasChanges {
-                self.syncPreferences()
-            }
             if hasChanges {
+                self.syncPreferences()
                 self.notifyDelegateOfListChanges()
             }
         }
@@ -253,8 +220,8 @@ class EpisodeChooser: NSObject {
         }
     }
 
-    func createEpisodeListStartingWith(url: URL) {
-        Util.log("trying to resume with \(url.relativeString)")
+    func createEpisodeListStartingWith(_ name: String) {
+        Util.log("trying to resume with \(name)")
         if self.notifyDelegateOfDownloadError() {
             return
         }
@@ -264,7 +231,7 @@ class EpisodeChooser: NSObject {
         synchronized(self.list) {
             if self.list.count == 0 {
                 DispatchQueue.global().asyncAfter(deadline: .now() + 0.5) {
-                    self.createEpisodeListStartingWith(url: url)
+                    self.createEpisodeListStartingWith(name)
                 }
                 isWaiting = true
             }
@@ -273,7 +240,7 @@ class EpisodeChooser: NSObject {
 
         // reorder and notify delegate
         synchronized(self.list) {
-            self.list.moveNameToFront(url.relativeString)
+            self.list.moveNameToFront(name)
             synchronized(self) {
                 self.delegate?.episodeListCreated()
                 self.hasNotifiedDelegateOfCreation = true

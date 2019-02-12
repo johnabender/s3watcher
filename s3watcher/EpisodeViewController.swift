@@ -10,7 +10,7 @@ import UIKit
 import AVKit
 
 private let pausedMoviesDefaultsKey = "pausedMovieInfo"
-private let pausedMovieUrlKey = "pausedMovieUrl"
+private let pausedMovieNameKey = "pausedMovieName"
 private let pausedMovieTimeKey = "pausedMovieTime"
 
 class EpisodeViewController: UIViewController, AVPlayerViewControllerDelegate, RatingDelegate, EpisodeChooserDelegate {
@@ -41,13 +41,13 @@ class EpisodeViewController: UIViewController, AVPlayerViewControllerDelegate, R
                 Util.log("started with pre-selected episode")
                 self.episodeListCreated()
             }
-            else if let (pausedUrl, _) = self.loadPaused() {
+            else if let (pausedName, _) = self.loadPaused() {
                 Util.log("found paused episode")
                 let alert = UIAlertController(title: "Paused video detected",
                                               message: "Resume paused video, or start a new video?",
                                               preferredStyle: .alert)
                 alert.addAction(UIAlertAction(title: "Resume", style: .default, handler: {(action: UIAlertAction) -> Void in
-                    self.episodeChooser?.createEpisodeListStartingWith(url: pausedUrl)
+                    self.episodeChooser?.createEpisodeListStartingWith(pausedName)
                     self.showProgressVC()
                 }))
                 alert.addAction(UIAlertAction(title: "New", style: .default, handler: {(action: UIAlertAction) -> Void in
@@ -79,8 +79,8 @@ class EpisodeViewController: UIViewController, AVPlayerViewControllerDelegate, R
     override func viewWillDisappear(_ animated: Bool) {
         self.avPlayerVC?.player?.pause()
         if let asset = self.avPlayerVC?.player?.currentItem?.asset as? AVURLAsset {
-            self.setPaused(url: asset.url, time: CMTimeGetSeconds(self.avPlayerVC!.player!.currentTime()))
-            Util.log("paused video \(asset.url.absoluteString)!)")
+            self.setPaused(name: asset.url.relativeString, time: CMTimeGetSeconds(self.avPlayerVC!.player!.currentTime()))
+            Util.log("paused video \(asset.url.relativeString)!)")
         }
         super.viewWillDisappear(animated)
     }
@@ -91,19 +91,18 @@ class EpisodeViewController: UIViewController, AVPlayerViewControllerDelegate, R
     }
 
     // TODO: move pause data into EpisodeChooser, maybe to Dynamo?
-    func loadPaused() -> (URL, Float64)? {
+    func loadPaused() -> (String, Float64)? {
         if let pausedData = UserDefaults.standard.dictionary(forKey: pausedMoviesDefaultsKey),
             let groupData = pausedData[self.episodeChooser!.group] as? [String: Any],
-            let urlString = groupData[pausedMovieUrlKey] as? String,
-            let url = URL(string: urlString),
+            let name = groupData[pausedMovieNameKey] as? String,
             let time = groupData[pausedMovieTimeKey] as? Float64 {
-            return (url, time)
+            return (name, time)
         }
         return nil
     }
 
-    func setPaused(url: URL, time: Float64) {
-        let newData: [String: Any] = [pausedMovieUrlKey: url.absoluteString,
+    func setPaused(name: String, time: Float64) {
+        let newData: [String: Any] = [pausedMovieNameKey: name,
                                       pausedMovieTimeKey: time]
         if var pausedData = UserDefaults.standard.dictionary(forKey: pausedMoviesDefaultsKey) {
             pausedData[self.episodeChooser!.group] = newData
@@ -210,6 +209,10 @@ class EpisodeViewController: UIViewController, AVPlayerViewControllerDelegate, R
                 self.episodeChooser != nil {
                 self.ratingVC?.currentRating = self.episodeChooser!.ratingForEpisodeWithName(asset.url.relativeString)
                 self.ratingVC?.episodeTitle = self.episodeChooser!.list.printableTitleForEpisodeWithName(asset.url.relativeString)
+                // TODO: nextContentProposal
+            }
+            else if self.avPlayerVC?.player?.currentItem == nil {
+                self.presentingViewController?.dismiss(animated: true, completion: nil)
             }
         }
     }
@@ -270,8 +273,6 @@ class EpisodeViewController: UIViewController, AVPlayerViewControllerDelegate, R
             let desiredItems = self.itemsFromEpisodeList()
             var desiredIndex = -1
 
-            // TODO: check math
-            // TODO: alter dynamo into conflict with S3 and test logic
             for (i, existingItem) in player.items().enumerated() {
                 guard let existingAsset = existingItem.asset as? AVURLAsset else { return }
                 if i == 0 {
@@ -301,24 +302,6 @@ class EpisodeViewController: UIViewController, AVPlayerViewControllerDelegate, R
             }
         }
     }
-
-    /*
-    func episodeListAppended() {
-        if let player = self.avPlayerVC?.player as? AVQueuePlayer {
-            for episodeName in self.episodeChooser!.sortedEpisodeNames[1...] {
-                let item = AVPlayerItem(url: self.episodeChooser!.publicUrlForEpisodeWithName(episodeName))
-                // TODO: nextContentProposal for previous last item is this item
-                player.insert(item, after: nil)
-            }
-        }
-        else {
-            // not playing yet, can't append, wait and try again
-            DispatchQueue.global().asyncAfter(deadline: .now() + 0.1) {
-                self.episodeListAppended()
-            }
-        }
-    }
- */
 
     func downloadError(_ error: Error) {
         var msg = error.localizedDescription

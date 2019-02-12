@@ -71,6 +71,7 @@ class SelectEpisodeViewController: UITableViewController, EpisodeChooserDelegate
 
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         let episodeName = self.episodeChooser!.list.nameForEpisodeAtIndex((indexPath as NSIndexPath).row)
+        Util.log("chose \(episodeName)")
         self.episodeChooser!.list.moveNameToFront(episodeName)
 
         let storyboard = UIStoryboard(name: "Main", bundle: nil)
