@@ -24,7 +24,7 @@ public class Keychain: Any {
         let deleteParameters: [NSString: Any] = [kSecClass: kSecClassGenericPassword,
                                                  kSecAttrService: serviceName,
                                                  kSecAttrAccount: key,
-                                                 kSecReturnData: kCFBooleanTrue]
+                                                 kSecReturnData: kCFBooleanTrue!]
         let deleteStatus = SecItemDelete(deleteParameters as CFDictionary)
         if (deleteStatus != errSecSuccess), let err = SecCopyErrorMessageString(deleteStatus, nil) {
             Util.log("failed deleting from keychain: \(err)")
@@ -46,7 +46,7 @@ public class Keychain: Any {
         let parameters: [NSString: Any] = [kSecClass: kSecClassGenericPassword,
                                            kSecAttrService: serviceName,
                                            kSecAttrAccount: key,
-                                           kSecReturnData: kCFBooleanTrue,
+                                           kSecReturnData: kCFBooleanTrue!,
                                            kSecMatchLimit: kSecMatchLimitOne]
         var valueRef: AnyObject?
         let status: OSStatus = SecItemCopyMatching(parameters as CFDictionary, &valueRef)

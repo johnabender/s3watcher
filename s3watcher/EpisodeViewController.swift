@@ -188,7 +188,6 @@ class EpisodeViewController: UIViewController, AVPlayerViewControllerDelegate, R
         vc.delegate = self
         vc.player = AVQueuePlayer(items: items)
         vc.player!.actionAtItemEnd = .advance
-        vc.skippingBehavior = .skipItem
         vc.view.frame = self.view.bounds
         self.addChild(vc)
         self.view.addSubview(vc.view)

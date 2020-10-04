@@ -122,9 +122,19 @@ class EpisodeList : NSObject {
 
         var candidates: [Episode] = []
         for episode in inputList {
-            var score = Double(10*max(1, episode.rating))
-            let maxOldest = 60.0*60.0*24.0*365.0*2.0
-            score *= min(maxOldest, -episode.lastPlayed.timeIntervalSinceNow)/maxOldest
+            // initialize score based on rating
+            var score = Double(episode.rating)
+            if episode.rating == 0 { score = 3 }
+            // weight rating based on time since last played
+            if episode.lastPlayed == Date(timeIntervalSinceReferenceDate: 0) {
+                score *= 10
+            }
+            else {
+                // 1 point per year since last played, to a max of 5
+                let timeFactor = max(min(round(-episode.lastPlayed.timeIntervalSinceNow/60.0/60.0/24.0/365.0), 5.0), 1.0)
+                score *= timeFactor
+            }
+
             for _ in 0..<max(1, Int(score.rounded())) {
                 candidates.append(episode)
             }
@@ -159,7 +169,7 @@ class Episode : NSObject {
     lazy var publicUrl = URL(string: self.name, relativeTo: baseUrl)!
 
     var rating: Int = 0
-    var lastPlayed: Date = Date()
+    var lastPlayed: Date = Date(timeIntervalSinceReferenceDate: 0)
 
     @available(*, deprecated) lazy private(set) var ratingKey = self.name + "_rating"
     @available(*, deprecated) lazy private(set) var lastPlayedKey = self.name + "_lastPlayed"
