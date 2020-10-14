@@ -126,12 +126,13 @@ class EpisodeList : NSObject {
             var score = Double(episode.rating)
             if episode.rating == 0 { score = 3 }
             // weight rating based on time since last played
-            if episode.lastPlayed == Date(timeIntervalSinceReferenceDate: 0) {
-                score *= 10
+            if episode.lastPlayed == Date(timeIntervalSince1970: 0) {
+                score *= 20
             }
             else {
                 // 1 point per year since last played, to a max of 5
-                let timeFactor = max(min(round(-episode.lastPlayed.timeIntervalSinceNow/60.0/60.0/24.0/365.0), 5.0), 1.0)
+                let monthsSinceSeen = -episode.lastPlayed.timeIntervalSinceNow/60.0/60.0/24.0/30.0
+                let timeFactor = max(min(round(monthsSinceSeen/6.0), 5.0), 1.0)
                 score *= timeFactor
             }
 
@@ -169,7 +170,7 @@ class Episode : NSObject {
     lazy var publicUrl = URL(string: self.name, relativeTo: baseUrl)!
 
     var rating: Int = 0
-    var lastPlayed: Date = Date(timeIntervalSinceReferenceDate: 0)
+    var lastPlayed: Date = Date(timeIntervalSince1970: 0)
 
     @available(*, deprecated) lazy private(set) var ratingKey = self.name + "_rating"
     @available(*, deprecated) lazy private(set) var lastPlayedKey = self.name + "_lastPlayed"
