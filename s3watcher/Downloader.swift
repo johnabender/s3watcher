@@ -120,7 +120,8 @@ class Downloader: NSObject {
                     if let s3obj = obj as? AWSS3Object {
                         if s3obj.size != 0,
                             s3obj.key.hasSuffix(".m3u8"),
-                            !s3obj.key.hasSuffix("-480p.m3u8")
+                            !s3obj.key.hasSuffix("-480p.m3u8"),
+                            !s3obj.key.hasSuffix("-1080p.m3u8")
                         {
                             list.append(s3obj.key!)
                             self.progressDelegate?.downloadListProgress(listCount: list.count)
