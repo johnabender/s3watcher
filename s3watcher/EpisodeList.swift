@@ -8,11 +8,17 @@
 
 import Foundation
 
+protocol EpisodeListRandomizationDelegate : class {
+    func listRandomizationProgress(_ progress: Double)
+}
+
 class EpisodeList : NSObject {
     private let baseUrl: URL
 
     private var list: [String: Episode] = [:]
     private(set) var sortedEpisodeNames: [String] = []
+
+    weak var delegate: EpisodeListRandomizationDelegate? = nil
 
     var isEmpty: Bool {
         return (self.list.count == 0)
@@ -89,14 +95,14 @@ class EpisodeList : NSObject {
     }
 
     func populateFromNames(_ names: [String]) {
-        self.sortedEpisodeNames = names
+        self.sortedEpisodeNames = names.sorted()
         self.list = Dictionary(uniqueKeysWithValues: self.sortedEpisodeNames.map {
             return ($0, Episode(baseUrl: self.baseUrl, key: $0))
         })
     }
 
     func populateFromPrefs(_ prefs: [String: [String: Any]], dateFormatter: ISO8601DateFormatter) {
-        self.sortedEpisodeNames = Array(prefs.keys)
+        self.sortedEpisodeNames = Array(prefs.keys.sorted())
         self.list = Dictionary(uniqueKeysWithValues: self.sortedEpisodeNames.map {
             let episode = Episode(baseUrl: self.baseUrl, key: $0)
             if let rating = prefs[$0]?["rating"] as? Int {
@@ -145,6 +151,8 @@ class EpisodeList : NSObject {
 
         var outputList: [Episode] = []
         while outputList.count < inputList.count {
+            self.delegate?.listRandomizationProgress(Double(outputList.count)/Double(inputList.count))
+
             let match = candidates[Int(arc4random_uniform(UInt32(candidates.count)))]
             outputList.append(match)
             for i in (0..<candidates.count).reversed() {

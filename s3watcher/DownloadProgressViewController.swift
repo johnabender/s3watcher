@@ -11,11 +11,14 @@ import UIKit
 class DownloadProgressViewController: UIViewController, DownloaderProgressDelegate {
 
     @IBOutlet weak var progressLabel: UILabel?
+    @IBOutlet weak var progressBar: UIProgressView?
+    @IBOutlet weak var spinner: UIActivityIndicatorView?
 
     override func viewDidLoad() {
         super.viewDidLoad()
 
         self.progressLabel?.text = ""
+        self.progressBar?.isHidden = true
     }
 
     func downloadListProgress(listCount: Int) {

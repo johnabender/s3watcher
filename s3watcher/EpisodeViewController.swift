@@ -47,12 +47,12 @@ class EpisodeViewController: UIViewController, AVPlayerViewControllerDelegate, R
                                               message: "Resume paused video, or start a new video?",
                                               preferredStyle: .alert)
                 alert.addAction(UIAlertAction(title: "Resume", style: .default, handler: {(action: UIAlertAction) -> Void in
-                    self.episodeChooser?.createEpisodeListStartingWith(pausedName)
+                    self.episodeChooser?.startCreatingEpisodeList(startingWith: pausedName)
                     self.showProgressVC()
                 }))
                 alert.addAction(UIAlertAction(title: "New", style: .default, handler: {(action: UIAlertAction) -> Void in
                     self.clearPaused()
-                    self.episodeChooser?.createEpisodeList()
+                    self.episodeChooser?.startCreatingEpisodeList()
                     self.showProgressVC()
                 }))
                 alert.addAction(UIAlertAction(title: "Cancel", style: .cancel, handler: { (action: UIAlertAction) in
@@ -64,7 +64,7 @@ class EpisodeViewController: UIViewController, AVPlayerViewControllerDelegate, R
             }
             else {
                 Util.log("selecting random episode")
-                self.episodeChooser?.createEpisodeList()
+                self.episodeChooser?.startCreatingEpisodeList()
                 self.showProgressVC()
             }
         }
@@ -150,6 +150,10 @@ class EpisodeViewController: UIViewController, AVPlayerViewControllerDelegate, R
         var items: [AVPlayerItem] = []
 
         for (i, episodeName) in self.episodeChooser!.list.enumerated() {
+            if i < 10 {
+                Util.log("queuing \(episodeName)")
+            }
+
             let item = AVPlayerItem(url: self.episodeChooser!.list.publicUrlForEpisodeWithName(episodeName))
             if i < self.episodeChooser!.list.count - 1 {
                 // TODO: nextContentProposal
@@ -222,7 +226,6 @@ class EpisodeViewController: UIViewController, AVPlayerViewControllerDelegate, R
 
     // MARK: - Episode Chooser Delegate
     func episodeListCreated() {
-        Util.log()
         let items = self.itemsFromEpisodeList()
 
         if items.count < 1 {
@@ -254,6 +257,27 @@ class EpisodeViewController: UIViewController, AVPlayerViewControllerDelegate, R
             }
             DispatchQueue.main.async {
                 self.avPlayerVC!.player!.play()
+            }
+        }
+    }
+
+    func randomizingEpisodeList() {
+        synchronized(self) {
+            if self.hasDisplayedProgressVC,
+               let pvc = self.presentedViewController as? DownloadProgressViewController {
+                pvc.spinner?.isHidden = true
+                pvc.progressBar?.isHidden = false
+                pvc.progressBar?.progress = 0.0
+            }
+            else { Util.log("\(self.hasDisplayedProgressVC), \(String(describing: self.presentedViewController))") }
+        }
+    }
+    
+    func episodeRandomizationProgress(_ progress: Double) {
+        synchronized(self) {
+            if self.hasDisplayedProgressVC,
+               let pvc = self.presentedViewController as? DownloadProgressViewController {
+                pvc.progressBar?.progress = Float(progress)
             }
         }
     }
@@ -328,6 +352,7 @@ class EpisodeViewController: UIViewController, AVPlayerViewControllerDelegate, R
         if let asset = self.avPlayerVC?.player?.currentItem?.asset as? AVURLAsset,
             self.episodeChooser != nil {
             self.episodeChooser!.setRatingForEpisodeWithName(asset.url.relativeString, rating: rating)
+            self.episodeChooser!.setLastPlayedDateForEpisodeWithName(asset.url.relativeString, date: Date())
         }
     }
 }

@@ -10,11 +10,13 @@ import Foundation
 
 protocol EpisodeChooserDelegate : class {
     func episodeListCreated()
+    func randomizingEpisodeList()
+    func episodeRandomizationProgress(_ progress: Double)
     func episodeListChanged()
     func downloadError(_ error: Error)
 }
 
-class EpisodeChooser: NSObject {
+class EpisodeChooser: NSObject, EpisodeListRandomizationDelegate {
     let group: String
     private let bucketName: String
     private let bucketRegion: AWSRegionType
@@ -49,6 +51,7 @@ class EpisodeChooser: NSObject {
 
         super.init()
 
+        self.list.delegate = self
         self.fillList()
     }
 
@@ -191,17 +194,19 @@ class EpisodeChooser: NSObject {
         return didNotify
     }
 
-    func createEpisodeList(randomize: Bool = true) {
+    func startCreatingEpisodeList(randomize: Bool = true, startingWith name: String? = nil) {
+        if name != nil { Util.log("trying to resume with \(name!)") }
+
         if self.notifyDelegateOfDownloadError() {
             return
         }
 
-        // ensure cached preferences have arrived
+        // ensure preferences have arrived
         var isWaiting = false
         synchronized(self.list) {
             if self.list.count == 0 {
-                DispatchQueue.global().asyncAfter(deadline: .now() + 0.5) {
-                    self.createEpisodeList(randomize: randomize)
+                DispatchQueue.global().asyncAfter(deadline: .now() + 0.5) { // why the delay?
+                    self.startCreatingEpisodeList(randomize: randomize, startingWith: name)
                 }
                 isWaiting = true
             }
@@ -209,41 +214,30 @@ class EpisodeChooser: NSObject {
         if isWaiting { return }
 
         // randomize and notify delegate
-        synchronized(self.list) {
-            if randomize {
-                self.list.randomize()
-            }
-            synchronized(self) {
-                self.delegate?.episodeListCreated()
-                self.hasNotifiedDelegateOfCreation = true
-            }
-        }
-    }
+        if randomize {
+            self.delegate?.randomizingEpisodeList()
 
-    func createEpisodeListStartingWith(_ name: String) {
-        Util.log("trying to resume with \(name)")
-        if self.notifyDelegateOfDownloadError() {
-            return
-        }
+            DispatchQueue.global().async {
+                synchronized(self.list) {
 
-        // ensure cached preferences have arrived
-        var isWaiting = false
-        synchronized(self.list) {
-            if self.list.count == 0 {
-                DispatchQueue.global().asyncAfter(deadline: .now() + 0.5) {
-                    self.createEpisodeListStartingWith(name)
+                    self.list.randomize()
+                    if name != nil {
+                        self.list.moveNameToFront(name!)
+                    }
+
+                    synchronized(self) {
+                        self.delegate?.episodeListCreated()
+                        self.hasNotifiedDelegateOfCreation = true
+                    }
                 }
-                isWaiting = true
             }
         }
-        if isWaiting { return }
-
-        // reorder and notify delegate
-        synchronized(self.list) {
-            self.list.moveNameToFront(name)
-            synchronized(self) {
-                self.delegate?.episodeListCreated()
-                self.hasNotifiedDelegateOfCreation = true
+        else {
+            synchronized(self.list) {
+                synchronized(self) {
+                    self.delegate?.episodeListCreated()
+                    self.hasNotifiedDelegateOfCreation = true
+                }
             }
         }
     }
@@ -258,6 +252,11 @@ class EpisodeChooser: NSObject {
             Util.log("want to sync \(prefs)")
             EpisodeDatabase.shared.setPreferencesForGroup(self.group, prefs: prefs)
         }
+    }
+
+    // MARK: - List Randomization Delegate
+    func listRandomizationProgress(_ progress: Double) {
+        self.delegate?.episodeRandomizationProgress(progress)
     }
 }
 

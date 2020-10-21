@@ -8,10 +8,13 @@
 
 import UIKit
 
-class SelectEpisodeViewController: UITableViewController, EpisodeChooserDelegate {
+class SelectEpisodeViewController: UITableViewController, EpisodeChooserDelegate, UITextFieldDelegate {
     private var episodeChooser: EpisodeChooser? = nil
 
     private var hasDisplayedProgressVC = false
+
+    weak var filterTextBox: UITextField? = nil
+    var filteredList: [String]? = nil
 
     func initialize(episodeChooser: EpisodeChooser) {
         self.episodeChooser = episodeChooser
@@ -25,8 +28,9 @@ class SelectEpisodeViewController: UITableViewController, EpisodeChooserDelegate
 
     func loadEpisodeList() {
         if episodeChooser != nil {
+            // initialization is complete, go for it
             self.episodeChooser!.delegate = self
-            self.episodeChooser!.createEpisodeList(randomize: false)
+            self.episodeChooser!.startCreatingEpisodeList(randomize: false)
             self.showProgressVC()
         }
         else {
@@ -54,45 +58,89 @@ class SelectEpisodeViewController: UITableViewController, EpisodeChooserDelegate
         }
     }
 
+    // MARK: - TableView Delegate
     override func numberOfSections(in tableView: UITableView) -> Int {
-        return 1
+        return 2
     }
 
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return self.episodeChooser!.list.count
+        switch (section) {
+        case 0:
+            return 1
+        case 1:
+            if self.filteredList != nil {
+                return self.filteredList!.count
+            }
+            return self.episodeChooser!.list.count
+        default:
+            return 0
+        }
     }
 
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: "reuseIdentifier", for: indexPath)
-        let episodeName = self.episodeChooser!.list.nameForEpisodeAtIndex((indexPath as NSIndexPath).row)
-        cell.textLabel?.text = self.episodeChooser!.list.printableTitleForEpisodeWithName(episodeName)
-        return cell
+        switch (indexPath.section) {
+        case 0:
+            let cell = tableView.dequeueReusableCell(withIdentifier: "search", for: indexPath)
+            for v in cell.contentView.subviews {
+                if let tf = v as? UITextField {
+                    self.filterTextBox = tf
+                    tf.delegate = self
+                }
+            }
+            return cell
+        case 1:
+            let cell = tableView.dequeueReusableCell(withIdentifier: "reuseIdentifier", for: indexPath)
+            var episodeName = self.episodeChooser!.list.nameForEpisodeAtIndex((indexPath as NSIndexPath).row)
+            if self.filteredList != nil {
+                episodeName = self.filteredList![indexPath.row]
+            }
+            cell.textLabel?.text = self.episodeChooser!.list.printableTitleForEpisodeWithName(episodeName)
+            return cell
+        default:
+            return UITableViewCell()
+        }
     }
 
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        let episodeName = self.episodeChooser!.list.nameForEpisodeAtIndex((indexPath as NSIndexPath).row)
-        Util.log("chose \(episodeName)")
-        self.episodeChooser!.list.moveNameToFront(episodeName)
-
-        let storyboard = UIStoryboard(name: "Main", bundle: nil)
-        if let episodeVC = storyboard.instantiateViewController(withIdentifier: "EpisodeViewController") as? EpisodeViewController {
-            if true {
-                let parent = self.presentingViewController!
-                parent.dismiss(animated: false) {
-                    parent.present(episodeVC, animated: false) {
-                        episodeVC.initialize(episodeChooser: self.episodeChooser!,
-                                             preselectedEpisode: true)
-                    }
-                }
-            } else {
-                // this is better behavior, but AVPlayerViewController is unhappy in this scenario
-                episodeVC.initialize(episodeChooser: self.episodeChooser!)
-                self.present(episodeVC, animated: true, completion: nil)
+        switch (indexPath.section) {
+        case 0:
+            self.filterTextBox?.select(self)
+        case 1:
+            if self.filterTextBox != nil,
+               self.filterTextBox!.isSelected {
+                Util.log("can't select an episode while filtering is open")
+                return
             }
+
+            var episodeName = self.episodeChooser!.list.nameForEpisodeAtIndex((indexPath as NSIndexPath).row)
+            if self.filteredList != nil {
+                episodeName = self.filteredList![indexPath.row]
+            }
+            Util.log("chose \(episodeName)")
+            self.episodeChooser!.list.moveNameToFront(episodeName)
+
+            let storyboard = UIStoryboard(name: "Main", bundle: nil)
+            if let episodeVC = storyboard.instantiateViewController(withIdentifier: "EpisodeViewController") as? EpisodeViewController {
+                if true {
+                    let parent = self.presentingViewController!
+                    parent.dismiss(animated: false) {
+                        parent.present(episodeVC, animated: false) {
+                            episodeVC.initialize(episodeChooser: self.episodeChooser!,
+                                                 preselectedEpisode: true)
+                        }
+                    }
+                } else {
+                    // this is better behavior, but AVPlayerViewController is unhappy in this scenario
+                    episodeVC.initialize(episodeChooser: self.episodeChooser!)
+                    self.present(episodeVC, animated: true, completion: nil)
+                }
+            }
+        default:
+            self.tableView.deselectRow(at: indexPath, animated: true)
         }
-        self.tableView.deselectRow(at: indexPath, animated: true)
     }
 
+    // MARK: - EpisodeChooser Delegate
     func episodeListCreated() {
         OperationQueue.main.addOperation {
             if self.hasDisplayedProgressVC {
@@ -101,6 +149,9 @@ class SelectEpisodeViewController: UITableViewController, EpisodeChooserDelegate
             self.tableView.reloadData()
         }
     }
+
+    func randomizingEpisodeList() {}
+    func episodeRandomizationProgress(_ progress: Double) {}
 
     func episodeListChanged() {
         OperationQueue.main.addOperation {
@@ -126,5 +177,18 @@ class SelectEpisodeViewController: UITableViewController, EpisodeChooserDelegate
         OperationQueue.main.addOperation({ () -> Void in
             self.present(alert, animated: true, completion: nil)
         })
+    }
+
+    // MARK: - TextField Delegate
+    func textFieldDidEndEditing(_ textField: UITextField) {
+        if !textField.hasText {
+            self.filteredList = nil
+        }
+        else {
+            self.filteredList = self.episodeChooser!.list.sortedEpisodeNames.filter {
+                $0.uppercased().contains(textField.text!.uppercased())
+            }
+            self.tableView.reloadSections(IndexSet(integer: 1), with: .top)
+        }
     }
 }
