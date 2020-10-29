@@ -7,49 +7,47 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		37314A8D254B8DA10091B3BD /* aws-tvos in Resources */ = {isa = PBXBuildFile; fileRef = 37314A8C254B8DA10091B3BD /* aws-tvos */; };
+		37314A93254B8DB60091B3BD /* AWSCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 37314A90254B8DB60091B3BD /* AWSCore.framework */; };
+		37314A95254B8DB60091B3BD /* AWSDynamoDB.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 37314A91254B8DB60091B3BD /* AWSDynamoDB.framework */; };
+		37314A97254B8DB60091B3BD /* AWSS3.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 37314A92254B8DB60091B3BD /* AWSS3.framework */; };
 		3736B77C2209E7C0007A28AD /* EpisodeList.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3736B77B2209E7C0007A28AD /* EpisodeList.swift */; };
 		37446C7B21921017003A29F1 /* RatingViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37446C7A21921017003A29F1 /* RatingViewController.swift */; };
 		376346F221C964FF0083336F /* Keychain.swift in Sources */ = {isa = PBXBuildFile; fileRef = 376346F121C964FF0083336F /* Keychain.swift */; };
 		37EA13FA21C997F200D4E8A8 /* DownloadProgressViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37EA13F921C997F200D4E8A8 /* DownloadProgressViewController.swift */; };
 		37EA13FC21CAED7600D4E8A8 /* SelectEpisodeViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37EA13FB21CAED7600D4E8A8 /* SelectEpisodeViewController.swift */; };
 		37FAF40222012A25005B8620 /* EpisodeDatabase.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37FAF40122012A25005B8620 /* EpisodeDatabase.swift */; };
-		37FAF40622012C27005B8620 /* AWSS3.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C3705EE31BF7DBF2002CA20F /* AWSS3.framework */; };
-		37FAF40822012C32005B8620 /* AWSDynamoDB.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 37FAF40722012C32005B8620 /* AWSDynamoDB.framework */; };
 		C308DA531EB75A5400F32E97 /* Util.swift in Sources */ = {isa = PBXBuildFile; fileRef = C308DA521EB75A5400F32E97 /* Util.swift */; };
 		C362A8891D0CCC0F00EAA9FF /* EpisodeChooser.swift in Sources */ = {isa = PBXBuildFile; fileRef = C362A8881D0CCC0F00EAA9FF /* EpisodeChooser.swift */; };
 		C362A88B1D0CCD0F00EAA9FF /* EpisodeViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C362A88A1D0CCD0F00EAA9FF /* EpisodeViewController.swift */; };
 		C3705EB81BF7D9BE002CA20F /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3705EB71BF7D9BE002CA20F /* AppDelegate.swift */; };
 		C3705EBA1BF7D9BE002CA20F /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3705EB91BF7D9BE002CA20F /* ViewController.swift */; };
-		C3705EBD1BF7D9BE002CA20F /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = C3705EBB1BF7D9BE002CA20F /* Main.storyboard */; };
+		C3705EBD1BF7D9BE002CA20F /* Main-tvos.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = C3705EBB1BF7D9BE002CA20F /* Main-tvos.storyboard */; };
 		C3705EBF1BF7D9BE002CA20F /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C3705EBE1BF7D9BE002CA20F /* Assets.xcassets */; };
-		C3705EE41BF7DBF2002CA20F /* AWSCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C3705EE21BF7DBF2002CA20F /* AWSCore.framework */; };
 		C3705EE71BF7DC2A002CA20F /* Downloader.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3705EE61BF7DC2A002CA20F /* Downloader.swift */; };
 		C3705EEC1BF7E47E002CA20F /* libz.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = C3705EEB1BF7E47E002CA20F /* libz.tbd */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		37314A8C254B8DA10091B3BD /* aws-tvos */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = "aws-tvos"; sourceTree = SOURCE_ROOT; };
+		37314A90254B8DB60091B3BD /* AWSCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AWSCore.framework; path = "aws-tvos/AWSCore.framework"; sourceTree = "<group>"; };
+		37314A91254B8DB60091B3BD /* AWSDynamoDB.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AWSDynamoDB.framework; path = "aws-tvos/AWSDynamoDB.framework"; sourceTree = "<group>"; };
+		37314A92254B8DB60091B3BD /* AWSS3.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AWSS3.framework; path = "aws-tvos/AWSS3.framework"; sourceTree = "<group>"; };
 		3736B77B2209E7C0007A28AD /* EpisodeList.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EpisodeList.swift; sourceTree = "<group>"; };
 		37446C7A21921017003A29F1 /* RatingViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RatingViewController.swift; sourceTree = "<group>"; };
 		376346F121C964FF0083336F /* Keychain.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Keychain.swift; sourceTree = "<group>"; };
 		37EA13F921C997F200D4E8A8 /* DownloadProgressViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DownloadProgressViewController.swift; sourceTree = "<group>"; };
 		37EA13FB21CAED7600D4E8A8 /* SelectEpisodeViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SelectEpisodeViewController.swift; sourceTree = "<group>"; };
 		37FAF40122012A25005B8620 /* EpisodeDatabase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EpisodeDatabase.swift; sourceTree = "<group>"; };
-		37FAF40722012C32005B8620 /* AWSDynamoDB.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = AWSDynamoDB.framework; sourceTree = SOURCE_ROOT; };
 		C308DA521EB75A5400F32E97 /* Util.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Util.swift; sourceTree = "<group>"; };
 		C362A8881D0CCC0F00EAA9FF /* EpisodeChooser.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EpisodeChooser.swift; sourceTree = "<group>"; };
 		C362A88A1D0CCD0F00EAA9FF /* EpisodeViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EpisodeViewController.swift; sourceTree = "<group>"; };
 		C3705EB41BF7D9BE002CA20F /* s3watcher.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = s3watcher.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		C3705EB71BF7D9BE002CA20F /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		C3705EB91BF7D9BE002CA20F /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
-		C3705EBC1BF7D9BE002CA20F /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
+		C3705EBC1BF7D9BE002CA20F /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = "Base.lproj/Main-tvos.storyboard"; sourceTree = "<group>"; };
 		C3705EBE1BF7D9BE002CA20F /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		C3705EC01BF7D9BE002CA20F /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		C3705EC91BF7D9BE002CA20F /* s3watcherTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = s3watcherTests.swift; sourceTree = "<group>"; };
-		C3705ECB1BF7D9BE002CA20F /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		C3705ED41BF7D9BE002CA20F /* s3watcherUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = s3watcherUITests.swift; sourceTree = "<group>"; };
-		C3705ED61BF7D9BE002CA20F /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		C3705EE21BF7DBF2002CA20F /* AWSCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = AWSCore.framework; sourceTree = SOURCE_ROOT; };
-		C3705EE31BF7DBF2002CA20F /* AWSS3.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = AWSS3.framework; sourceTree = SOURCE_ROOT; };
 		C3705EE61BF7DC2A002CA20F /* Downloader.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Downloader.swift; sourceTree = "<group>"; };
 		C3705EEA1BF7DE4B002CA20F /* s3watcher-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "s3watcher-Bridging-Header.h"; sourceTree = "<group>"; };
 		C3705EEB1BF7E47E002CA20F /* libz.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libz.tbd; path = usr/lib/libz.tbd; sourceTree = SDKROOT; };
@@ -60,10 +58,10 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				37314A97254B8DB60091B3BD /* AWSS3.framework in Frameworks */,
 				C3705EEC1BF7E47E002CA20F /* libz.tbd in Frameworks */,
-				C3705EE41BF7DBF2002CA20F /* AWSCore.framework in Frameworks */,
-				37FAF40622012C27005B8620 /* AWSS3.framework in Frameworks */,
-				37FAF40822012C32005B8620 /* AWSDynamoDB.framework in Frameworks */,
+				37314A95254B8DB60091B3BD /* AWSDynamoDB.framework in Frameworks */,
+				37314A93254B8DB60091B3BD /* AWSCore.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -73,6 +71,9 @@
 		37FAF40522012C27005B8620 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				37314A90254B8DB60091B3BD /* AWSCore.framework */,
+				37314A91254B8DB60091B3BD /* AWSDynamoDB.framework */,
+				37314A92254B8DB60091B3BD /* AWSS3.framework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -81,8 +82,6 @@
 			isa = PBXGroup;
 			children = (
 				C3705EB61BF7D9BE002CA20F /* s3watcher */,
-				C3705EC81BF7D9BE002CA20F /* s3watcherTests */,
-				C3705ED31BF7D9BE002CA20F /* s3watcherUITests */,
 				C3705EB51BF7D9BE002CA20F /* Products */,
 				37FAF40522012C27005B8620 /* Frameworks */,
 			);
@@ -111,34 +110,14 @@
 				37EA13F921C997F200D4E8A8 /* DownloadProgressViewController.swift */,
 				C308DA521EB75A5400F32E97 /* Util.swift */,
 				376346F121C964FF0083336F /* Keychain.swift */,
-				C3705EBB1BF7D9BE002CA20F /* Main.storyboard */,
+				C3705EBB1BF7D9BE002CA20F /* Main-tvos.storyboard */,
 				C3705EBE1BF7D9BE002CA20F /* Assets.xcassets */,
 				C3705EC01BF7D9BE002CA20F /* Info.plist */,
 				C3705EEA1BF7DE4B002CA20F /* s3watcher-Bridging-Header.h */,
-				C3705EE21BF7DBF2002CA20F /* AWSCore.framework */,
-				C3705EE31BF7DBF2002CA20F /* AWSS3.framework */,
-				37FAF40722012C32005B8620 /* AWSDynamoDB.framework */,
 				C3705EEB1BF7E47E002CA20F /* libz.tbd */,
+				37314A8C254B8DA10091B3BD /* aws-tvos */,
 			);
 			path = s3watcher;
-			sourceTree = "<group>";
-		};
-		C3705EC81BF7D9BE002CA20F /* s3watcherTests */ = {
-			isa = PBXGroup;
-			children = (
-				C3705EC91BF7D9BE002CA20F /* s3watcherTests.swift */,
-				C3705ECB1BF7D9BE002CA20F /* Info.plist */,
-			);
-			path = s3watcherTests;
-			sourceTree = "<group>";
-		};
-		C3705ED31BF7D9BE002CA20F /* s3watcherUITests */ = {
-			isa = PBXGroup;
-			children = (
-				C3705ED41BF7D9BE002CA20F /* s3watcherUITests.swift */,
-				C3705ED61BF7D9BE002CA20F /* Info.plist */,
-			);
-			path = s3watcherUITests;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -167,7 +146,7 @@
 		C3705EAC1BF7D9BD002CA20F /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastSwiftUpdateCheck = 0710;
+				LastSwiftUpdateCheck = 1210;
 				LastUpgradeCheck = 1200;
 				ORGANIZATIONNAME = "Bender Systems, LLC";
 				TargetAttributes = {
@@ -203,7 +182,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				C3705EBF1BF7D9BE002CA20F /* Assets.xcassets in Resources */,
-				C3705EBD1BF7D9BE002CA20F /* Main.storyboard in Resources */,
+				37314A8D254B8DA10091B3BD /* aws-tvos in Resources */,
+				C3705EBD1BF7D9BE002CA20F /* Main-tvos.storyboard in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -232,12 +212,12 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXVariantGroup section */
-		C3705EBB1BF7D9BE002CA20F /* Main.storyboard */ = {
+		C3705EBB1BF7D9BE002CA20F /* Main-tvos.storyboard */ = {
 			isa = PBXVariantGroup;
 			children = (
 				C3705EBC1BF7D9BE002CA20F /* Base */,
 			);
-			name = Main.storyboard;
+			name = "Main-tvos.storyboard";
 			sourceTree = "<group>";
 		};
 /* End PBXVariantGroup section */
@@ -351,11 +331,12 @@
 				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = LaunchImage;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				"CODE_SIGN_IDENTITY[sdk=appletvos*]" = "iPhone Developer";
-				CURRENT_PROJECT_VERSION = 20201019.1;
+				CURRENT_PROJECT_VERSION = 20201021.1;
 				DEVELOPMENT_TEAM = 4FF5GW8T44;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)",
+					"$(PROJECT_DIR)/aws-tvos",
 				);
 				INFOPLIST_FILE = s3watcher/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
@@ -378,11 +359,12 @@
 				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = LaunchImage;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				"CODE_SIGN_IDENTITY[sdk=appletvos*]" = "iPhone Developer";
-				CURRENT_PROJECT_VERSION = 20201019.1;
+				CURRENT_PROJECT_VERSION = 20201021.1;
 				DEVELOPMENT_TEAM = 4FF5GW8T44;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)",
+					"$(PROJECT_DIR)/aws-tvos",
 				);
 				INFOPLIST_FILE = s3watcher/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
